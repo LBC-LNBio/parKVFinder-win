@@ -1,5 +1,5 @@
 parKVFinder-win64: dictionaryprocessing.o matrixprocessing.o pdbprocessing.o argparser.o tomlprocessing.o resultsprocessing.o move src/parKVFinder.c
-	x86_64-w64-mingw32-gcc -fopenmp -Isrc -g -o parKVFinder-win64 lib/dictionaryprocessing.o lib/matrixprocessing.o lib/pdbprocessing.o lib/argparser.o lib/tomlprocessing.o lib/resultsprocessing.o src/parKVFinder.c -lm
+	x86_64-w64-mingw32-gcc -fopenmp -Isrc -g -o parKVFinder-win64.exe lib/dictionaryprocessing.o lib/matrixprocessing.o lib/pdbprocessing.o lib/argparser.o lib/tomlprocessing.o lib/resultsprocessing.o src/parKVFinder.c -lm
 
 matrixprocessing.o: src/matrixprocessing.c src/matrixprocessing.h
 	x86_64-w64-mingw32-gcc -fopenmp -O3 -Isrc -c src/matrixprocessing.c -lm -static
@@ -23,4 +23,5 @@ move: dictionaryprocessing.o matrixprocessing.o pdbprocessing.o argparser.o toml
 	mv dictionaryprocessing.o matrixprocessing.o pdbprocessing.o argparser.o tomlprocessing.o resultsprocessing.o lib/
 
 clean:
-	rm -r lib/matrixprocessing.o lib/dictionaryprocessing.o lib/pdbprocessing.o lib/argparser.o lib/tomlprocessing.o lib/resultsprocessing.o parKVFinder-win64
+	rm -r lib/matrixprocessing.o lib/dictionaryprocessing.o lib/pdbprocessing.o lib/argparser.o lib/tomlprocessing.o lib/resultsprocessing.o parKVFinder-win64.exe
+
