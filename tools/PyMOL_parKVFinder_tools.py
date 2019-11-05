@@ -26,7 +26,10 @@
 ###################################################################################################
 
 # Import required modules
-from builtins import chr  # unichr works for python 2 and 3
+try:
+    from builtins import chr  # unichr works for python 2 and 3
+except ImportError:
+    from __builtin__ import chr # Windows
 import os
 import subprocess
 import math
