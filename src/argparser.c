@@ -1131,7 +1131,7 @@ argparser (int argc,
 	}
 	/* Ligand file */
 	if(!l_flag) { /* Windows */
-		LIGAND_NAME = ""; /* Windows */
+		LIGAND_NAME = "\0"; /* Windows */
 	} /* Windows */
 	/* Ligand mode */
 	if (!lc_flag) {
