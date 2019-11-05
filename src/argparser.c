@@ -201,6 +201,13 @@ print_toml (char *toml_name,
 	FILE *toml_file;
 	char buffer[1024], *wpmode, *bmode, *smode, *kmode, *lmode, *hmode, *emode;
 
+	/* Convert to Windows paths */
+	convert_path_windows(PDB_NAME); /* Windows */
+	convert_path_windows(OUTPUT); /* Windows */
+	if (LIGAND_NAME == "\0") ; /* Windows */
+	else convert_path_windows(LIGAND_NAME); /* Windows */
+	convert_path_windows(dictionary_name); /* Windows */
+
     /* Create KV_Files directory */
     mkdir(combine(OUTPUT, "KV_Files\\"));
 //	_mkdir(combine(OUTPUT, "KV_Files\\")); /* Windows */

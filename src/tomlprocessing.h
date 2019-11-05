@@ -17,6 +17,7 @@ typedef struct TOML {
 
 toml *param;
 
+void convert_path_windows (char PATH[500]); /* Windows */
 toml* readTOML(toml *p, char *path);
 int TF_input(char flag_in[6]);
 void init2(int S[2]);

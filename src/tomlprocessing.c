@@ -9,6 +9,34 @@
 /* Import custom modules */
 #include "tomlprocessing.h"
 
+void
+convert_path_windows (char PATH[500])
+{
+	/* Declare variables */
+	int i, j;
+	static char TMP_PATH[500];
+
+	for (i = 0, j = 0; i < 500 || PATH[i] == '\0'; i++) {
+		if (PATH[i] == '/' || PATH[i] == '\\') {
+			if (PATH[i+1] == '\\') ;
+			else {
+				TMP_PATH[j++] = '\\';
+				TMP_PATH[j++] = '\\';
+			}
+		}
+		else {
+			TMP_PATH[j++] = PATH[i];
+		}
+	}
+
+	for(i = 0; i < 500; i++) {
+		PATH[i] = TMP_PATH[i];
+	}
+
+	printf("%s\n", PATH);
+
+}
+
 /*Reads TOML file inside LINE*/
 int
 get_toml_line (FILE *arq,
@@ -369,6 +397,13 @@ readTOML (toml *p,
 		LINE[i] = '\n';
 		goto HANDLE_LAST_LINE;
 	}
+
+	/* Convert to Windows paths */
+	convert_path_windows(p->PDB_NAME); /* Windows */
+	convert_path_windows(p->OUTPUT); /* Windows */
+	if (p->LIGAND_NAME == "\0") ; /* Windows */
+	else convert_path_windows(p->LIGAND_NAME); /* Windows */
+	convert_path_windows(p->dictionary_name); /* Windows */
 
     /* Return struct TOML */
 	return p;
