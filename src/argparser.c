@@ -1129,6 +1129,10 @@ argparser (int argc,
 		exit (-1);
 
 	}
+	/* Ligand file */
+	if(!l_flag) {
+		LIGAND_NAME = "";
+	}
 	/* Ligand mode */
 	if (!lc_flag) {
 

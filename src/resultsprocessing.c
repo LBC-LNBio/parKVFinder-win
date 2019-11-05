@@ -83,7 +83,8 @@ write_results (char *output_results,
 	char results[1024];
 	int kvnum, iterator;
 
-    /* Open KVFinder.results.toml */#pragma omp for schedule(dynamic)
+    /* Open KVFinder.results.toml */
+#pragma omp for schedule(dynamic)
 	results_file = fopen (output_results, "w");
 	/* Save memory for buffer */
 	memset (results, '\0', sizeof (results));

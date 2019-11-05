@@ -162,7 +162,7 @@ main (int argc,
 	output = combine (output, BASE_NAME); /* Include BASE_NAME folder in KV_Files */
 //	mkdir (output, S_IRWXU); /* Create BASE_NAME folder in KV_Files */
 	mkdir (output); /* Windows */
-	output_folder = combine (output, "/"); /* Include bar after appending BASE_NAME */
+	output_folder = combine (output, "\\"); /* Include bar after appending BASE_NAME */
 	output = combine (output_folder, BASE_NAME); /* Include BASE_NAME to output path in BASE_NAME folder */
 
 	/* Create output PDB and results file names */
