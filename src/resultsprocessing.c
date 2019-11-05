@@ -78,12 +78,6 @@ write_results (char *output_results,
                char step_flag[6],
                int ncav)
 {
-	/* Convert to Windows paths */
-	convert_path_windows(pdb_name); /* Windows */
-	convert_path_windows(output_pdb); /* Windows */
-	if (LIGAND_NAME == "\0") ; /* Windows */
-	else convert_path_windows(LIGAND_NAME); /* Windows */
-
 	/* Declare variables */
 	FILE *results_file;
 	char results[1024];
