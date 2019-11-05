@@ -33,8 +33,6 @@ convert_path_windows (char PATH[500])
 		PATH[i] = TMP_PATH[i];
 	}
 
-	printf("%s\n", PATH);
-
 }
 
 /*Reads TOML file inside LINE*/
