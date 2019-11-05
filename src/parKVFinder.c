@@ -138,13 +138,13 @@ main (int argc,
 	if (OUTPUT[strlen(OUTPUT)-1] == '\\') { /* Windows */
 		if (OUTPUT[strlen(OUTPUT)-2] == '\\') /* Windows */
 		    OUTPUT[strlen(OUTPUT)-1] = '\0';
-		output = combine(OUTPUT, "KV_Files\\"); /* Windows */
+		output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
 	}
 	else {
 		if(OUTPUT[0] == '\0')
-		    output = combine(OUTPUT, "KV_Files\\"); /* Windows */
+		    output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
 		else
-		    output = combine(OUTPUT, "\\KV_Files\\"); /* Windows */
+		    output = combine(OUTPUT, "\\\\KV_Files\\\\"); /* Windows */
 	}
 //	pdb_name = realpath (PDB_NAME, NULL);
 	_fullpath(pdb_name, PDB_NAME, 500); /* Windows */
@@ -162,7 +162,7 @@ main (int argc,
 	output = combine (output, BASE_NAME); /* Include BASE_NAME folder in KV_Files */
 //	mkdir (output, S_IRWXU); /* Create BASE_NAME folder in KV_Files */
 	mkdir (output); /* Windows */
-	output_folder = combine (output, "\\"); /* Include bar after appending BASE_NAME */ /* Windows */
+	output_folder = combine (output, "\\\\"); /* Include bar after appending BASE_NAME */ /* Windows */
 	output = combine (output_folder, BASE_NAME); /* Include BASE_NAME to output path in BASE_NAME folder */
 
 	/* Create output PDB and results file names */

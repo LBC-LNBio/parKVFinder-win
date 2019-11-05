@@ -10,6 +10,7 @@ software*/
 /* Import custom modules */
 #include "dictionaryprocessing.h"
 #include "resultsprocessing.h"
+#include "tomlprocessing.h"
 
 /* Insert residue information (resnum, chain, resname, resclass) in linked list (res_info) inside KVresults structure */
 void
@@ -77,6 +78,11 @@ write_results (char *output_results,
                char step_flag[6],
                int ncav)
 {
+	/* Convert to Windows paths */
+	convert_path_windows(pdb_name); /* Windows */
+	convert_path_windows(output_pdb); /* Windows */
+	if (LIGAND_NAME == "\0") ; /* Windows */
+	else convert_path_windows(LIGAND_NAME); /* Windows */
 
 	/* Declare variables */
 	FILE *results_file;
@@ -84,7 +90,6 @@ write_results (char *output_results,
 	int kvnum, iterator;
 
     /* Open KVFinder.results.toml */
-#pragma omp for schedule(dynamic)
 	results_file = fopen (output_results, "w");
 	/* Save memory for buffer */
 	memset (results, '\0', sizeof (results));
