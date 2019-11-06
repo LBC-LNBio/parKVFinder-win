@@ -234,7 +234,7 @@ print_toml (char *toml_name,
 	fprintf (toml_file, "# Base name for output files.\n");
 	fprintf (toml_file, "base_name = \"%s\"\n", BASE_NAME);
 	fprintf (toml_file, "# Path for the ligand's PDB file.\n");
-
+//	fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
 	/* Windows */
 	if (strcmp (LIGAND_NAME, "-") == 0)
 		fprintf (toml_file, "ligand = \"\"\n");
