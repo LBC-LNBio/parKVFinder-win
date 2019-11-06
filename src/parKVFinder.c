@@ -167,7 +167,6 @@ main (int argc,
 //	}
 //	pdb_name = realpath (PDB_NAME, NULL);
 	_fullpath(pdb_name, PDB_NAME, 500); /* Windows */
-	convert_path_windows(pdb_name);
 
 	/* Create KV_Files folder */
 //	mkdir (output, S_IRWXU);
@@ -452,7 +451,8 @@ main (int argc,
 	/* Write results file */
 	if (verbose_flag)
 	    fprintf (stdout, "> Writing results file\n");
-	write_results (output_results, pdb_name, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav);
+	write_results (output_results, PDB_NAME, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav); /* Windows */
+//	write_results (output_results, pdb_name, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav);
 
 	/*Evaluate elapsed time*/
     gettimeofday (&toc, NULL);
