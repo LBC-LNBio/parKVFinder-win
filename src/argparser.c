@@ -204,6 +204,8 @@ print_toml (char *toml_name,
 //	/* Convert to Windows paths */
 	convert_path_windows(PDB_NAME); /* Windows */
 	convert_path_windows(OUTPUT); /* Windows */
+	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-"));
+	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-") == 0);
 	if (strcmp (LIGAND_NAME, "-") == 0) ; /* Windows */
 	else convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
