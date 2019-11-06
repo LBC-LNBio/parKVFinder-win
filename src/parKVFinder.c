@@ -167,6 +167,7 @@ main (int argc,
 //	}
 //	pdb_name = realpath (PDB_NAME, NULL);
 	_fullpath(pdb_name, PDB_NAME, 500); /* Windows */
+	convert_path_windows(pdb_name);
 
 	/* Create KV_Files folder */
 //	mkdir (output, S_IRWXU);

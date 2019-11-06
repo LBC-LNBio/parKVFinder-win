@@ -96,10 +96,13 @@ write_results (char *output_results,
 
 	/* Files paths */
 	fprintf (results_file,
-	         "[FILES_PATH]\nINPUT = \"%s\"\nOUTPUT = \"%s\"\nLIGAND = \"%s\"\n\n",
+	         "[FILES_PATH]\nINPUT = \"%s\"\nOUTPUT = \"%s\"\n",
 	         pdb_name,
-	         output_pdb,
-	         LIGAND_NAME);
+	         output_pdb);
+	if (LIGAND_NAME[0] == '\0')
+		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
+	else
+		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
 
 	/* Parameters */
 	fprintf (results_file, "[PARAMETERS]\nRESOLUTION = \"%s\"\nSTEP_SIZE = %s\n\n", resolution_flag, step_flag);
