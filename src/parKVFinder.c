@@ -135,17 +135,36 @@ main (int argc,
 	dictionary_load (DIC, tablesize, dictionary_name); /*Dictionary Loaded*/
 
 	/* Preparing files paths */
-	if (OUTPUT[strlen(OUTPUT)-1] == '\\') { /* Windows */
-		if (OUTPUT[strlen(OUTPUT)-2] == '\\') /* Windows */
-		    OUTPUT[strlen(OUTPUT)-1] = '\0';
-		output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
+	/* Windows */
+	if (OUTPUT[strlen (OUTPUT) - 1] == '\\') {
+		if (OUTPUT[strlen (OUTPUT) - 2] == '\\') {
+			if (OUTPUT[strlen (OUTPUT - 3)] == '\\') {
+				OUTPUT[strlen (OUTPUT) - 1] = '\0';
+			}
+			output = combine(OUTPUT, "KV_Files\\\\");
+		}
+		else {
+		output =  combine(OUTPUT, "\\KV_Files\\\\");
+		}
 	}
 	else {
-		if(OUTPUT[0] == '\0')
-		    output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
+		if (OUTPUT[0] == '\0')
+			output = combine(OUTPUT, "KV_Files\\\\");
 		else
-		    output = combine(OUTPUT, "\\\\KV_Files\\\\"); /* Windows */
+			output = combine(OUTPUT, "\\\\KV_Files\\\\");
 	}
+
+//	if (OUTPUT[strlen(OUTPUT)-1] == '\\') { /* Windows */
+//		if (OUTPUT[strlen(OUTPUT)-2] == '\\') /* Windows */
+//		    OUTPUT[strlen(OUTPUT)-1] = '\0';
+//		output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
+//	}
+//	else {
+//		if(OUTPUT[0] == '\0')
+//		    output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
+//		else
+//		    output = combine(OUTPUT, "\\\\KV_Files\\\\"); /* Windows */
+//	}
 //	pdb_name = realpath (PDB_NAME, NULL);
 	_fullpath(pdb_name, PDB_NAME, 500); /* Windows */
 

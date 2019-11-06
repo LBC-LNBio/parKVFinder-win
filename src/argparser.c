@@ -201,7 +201,7 @@ print_toml (char *toml_name,
 	FILE *toml_file;
 	char buffer[1024], *wpmode, *bmode, *smode, *kmode, *lmode, *hmode, *emode;
 
-	/* Convert to Windows paths */
+//	/* Convert to Windows paths */
 	convert_path_windows(PDB_NAME); /* Windows */
 	convert_path_windows(OUTPUT); /* Windows */
 	if (LIGAND_NAME == "\0") ; /* Windows */
@@ -209,8 +209,7 @@ print_toml (char *toml_name,
 	convert_path_windows(dictionary_name); /* Windows */
 
     /* Create KV_Files directory */
-    mkdir(combine(OUTPUT, "KV_Files\\"));
-//	_mkdir(combine(OUTPUT, "KV_Files\\")); /* Windows */
+    mkdir(combine(OUTPUT, "KV_Files\\\\")); /* Windows */
 
     /* Open TOML file */
 	toml_file = fopen (toml_name, "w");
@@ -233,7 +232,12 @@ print_toml (char *toml_name,
 	fprintf (toml_file, "# Base name for output files.\n");
 	fprintf (toml_file, "base_name = \"%s\"\n", BASE_NAME);
 	fprintf (toml_file, "# Path for the ligand's PDB file.\n");
-	fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
+
+	/* Windows */
+	if (LIGAND_NAME[0] == '\0')
+		fprintf (toml_file, "ligand = \"%s\"\n", "");
+	else
+		fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
 
 	fprintf (toml_file, "\n[SETTINGS]\n");
 	fprintf (toml_file, "# Settings for parKVFinder software\n");
