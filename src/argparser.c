@@ -206,9 +206,11 @@ print_toml (char *toml_name,
 	convert_path_windows(OUTPUT); /* Windows */
 	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-"));
 	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-") == 0);
+		printf("LIGAND_NAME: %s\n", LIGAND_NAME);
 	if (strcmp (LIGAND_NAME, "-") != 0) /* Windows */
 		convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
+	printf("LIGAND_NAME: %s\n", LIGAND_NAME);
 
     /* Create KV_Files directory */
     mkdir(combine(OUTPUT, "KV_Files\\\\")); /* Windows */
@@ -1144,7 +1146,7 @@ argparser (int argc,
 	}
 	/* Ligand file */
 	if(!l_flag) { /* Windows */
-		LIGAND_NAME = "-"; /* Windows */
+		LIGAND_NAME = "-\0"; /* Windows */
 	} /* Windows */
 	/* Ligand mode */
 	if (!lc_flag) {
