@@ -201,13 +201,12 @@ print_toml (char *toml_name,
 	FILE *toml_file;
 	char buffer[1024], *wpmode, *bmode, *smode, *kmode, *lmode, *hmode, *emode;
 
-//	/* Convert to Windows paths */
+	/* Convert to Windows paths */
 	convert_path_windows(PDB_NAME); /* Windows */
 	convert_path_windows(OUTPUT); /* Windows */
-	if (strcmp (LIGAND_NAME, "-") != 0) /* Windows */
+	if (strcmp (LIGAND_NAME, "") != 0) /* Windows */
 		convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
-	printf("LIGAND_NAME (argparser) : %s\n", LIGAND_NAME);
 
     /* Create KV_Files directory */
     mkdir(combine(OUTPUT, "KV_Files\\\\")); /* Windows */
@@ -233,12 +232,12 @@ print_toml (char *toml_name,
 	fprintf (toml_file, "# Base name for output files.\n");
 	fprintf (toml_file, "base_name = \"%s\"\n", BASE_NAME);
 	fprintf (toml_file, "# Path for the ligand's PDB file.\n");
-//	fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
-	/* Windows */
-	if (strcmp (LIGAND_NAME, "-") == 0)
-		fprintf (toml_file, "ligand = \"\"\n");
-	else
-		fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
+	fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
+//	/* Windows */
+//	if (strcmp (LIGAND_NAME, "-") == 0)
+//		fprintf (toml_file, "ligand = \"\"\n");
+//	else
+//		fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
 
 	fprintf (toml_file, "\n[SETTINGS]\n");
 	fprintf (toml_file, "# Settings for parKVFinder software\n");
@@ -1143,7 +1142,7 @@ argparser (int argc,
 	}
 	/* Ligand file */
 	if(!l_flag) { /* Windows */
-		strcpy(LIGAND_NAME, "-"); /* Windows */
+		strcpy(LIGAND_NAME, ""); /* Windows */
 	} /* Windows */
 	/* Ligand mode */
 	if (!lc_flag) {

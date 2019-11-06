@@ -96,18 +96,15 @@ write_results (char *output_results,
 
 	/* Files paths */
 	fprintf (results_file,
-	         "[FILES_PATH]\nINPUT = \"%s\"\nOUTPUT = \"%s\"\n",
+	         "[FILES_PATH]\nINPUT = \"%s\"\nOUTPUT = \"%s\"\nLIGAND = \"%s\"\n\n",
 	         pdb_name,
-	         output_pdb);
-	printf("LIGAND_NAME: %s\n", LIGAND_NAME);
-	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-"));
-	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-") == 0);
-	if (strcmp (LIGAND_NAME, "-") == 0){
-		fprintf (results_file, "LIGAND = \"\"\n\n");
-		printf("Hello World!\n");
-	}
-	else
-		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
+	         output_pdb,
+	         LIGAND_NAME);
+//	if (strcmp (LIGAND_NAME, "-") == 0){
+//		fprintf (results_file, "LIGAND = \"\"\n\n");
+//	}
+//	else
+//		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
 
 
 	/* Parameters */
