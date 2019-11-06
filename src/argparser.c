@@ -206,7 +206,7 @@ print_toml (char *toml_name,
 	convert_path_windows(OUTPUT); /* Windows */
 	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-"));
 	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-") == 0);
-	if (strcmp (LIGAND_NAME, "-") == 0) /* Windows */
+	if (strcmp (LIGAND_NAME, "-") != 0) /* Windows */
 		convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
 
