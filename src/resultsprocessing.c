@@ -100,10 +100,10 @@ write_results (char *output_results,
 	         pdb_name,
 	         output_pdb);
 	printf("LIGAND_NAME: %s\n", LIGAND_NAME);
-	if (strcmp (LIGAND_NAME, "-"))
-		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
-	else
+	if (strcmp (LIGAND_NAME, "-") == 0)
 		fprintf (results_file, "LIGAND = \"\"\n\n");
+	else
+		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
 
 
 	/* Parameters */

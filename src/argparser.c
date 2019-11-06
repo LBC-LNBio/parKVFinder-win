@@ -206,7 +206,7 @@ print_toml (char *toml_name,
 	convert_path_windows(OUTPUT); /* Windows */
 	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-"));
 	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-") == 0);
-	if (strcmp (LIGAND_NAME, "-")) ; /* Windows */
+	if (strcmp (LIGAND_NAME, "-") == 0) ; /* Windows */
 		convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
 
@@ -236,8 +236,8 @@ print_toml (char *toml_name,
 	fprintf (toml_file, "# Path for the ligand's PDB file.\n");
 
 	/* Windows */
-	if (LIGAND_NAME[0] == '\0')
-		fprintf (toml_file, "ligand = \"%s\"\n", "");
+	if (strcmp (LIGAND_NAME, "-") == 0)
+		fprintf (toml_file, "ligand = \"\"\n");
 	else
 		fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
 
