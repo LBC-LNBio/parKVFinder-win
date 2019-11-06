@@ -204,7 +204,7 @@ print_toml (char *toml_name,
 //	/* Convert to Windows paths */
 	convert_path_windows(PDB_NAME); /* Windows */
 	convert_path_windows(OUTPUT); /* Windows */
-	if (LIGAND_NAME == "\0") ; /* Windows */
+	if (strcmp (LIGAND_NAME, "-") == 0) ; /* Windows */
 	else convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
 
@@ -1142,7 +1142,7 @@ argparser (int argc,
 	}
 	/* Ligand file */
 	if(!l_flag) { /* Windows */
-		LIGAND_NAME = "\0"; /* Windows */
+		LIGAND_NAME = "-"; /* Windows */
 	} /* Windows */
 	/* Ligand mode */
 	if (!lc_flag) {

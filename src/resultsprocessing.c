@@ -99,7 +99,7 @@ write_results (char *output_results,
 	         "[FILES_PATH]\nINPUT = \"%s\"\nOUTPUT = \"%s\"\n",
 	         pdb_name,
 	         output_pdb);
-	if (LIGAND_NAME[0] == '\0')
+	if (strcmp (LIGAND_NAME, "-") == 0)
 		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
 	else
 		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
