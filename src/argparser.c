@@ -204,13 +204,10 @@ print_toml (char *toml_name,
 //	/* Convert to Windows paths */
 	convert_path_windows(PDB_NAME); /* Windows */
 	convert_path_windows(OUTPUT); /* Windows */
-	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-"));
-	printf("strcmp : %d\n", strcmp (LIGAND_NAME, "-") == 0);
-		printf("LIGAND_NAME: %s\n", LIGAND_NAME);
+	printf("LIGAND_NAME (argparser) : %s\n", LIGAND_NAME);
 	if (strcmp (LIGAND_NAME, "-") != 0) /* Windows */
 		convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
-	printf("LIGAND_NAME: %s\n", LIGAND_NAME);
 
     /* Create KV_Files directory */
     mkdir(combine(OUTPUT, "KV_Files\\\\")); /* Windows */
@@ -242,6 +239,8 @@ print_toml (char *toml_name,
 		fprintf (toml_file, "ligand = \"\"\n");
 	else
 		fprintf (toml_file, "ligand = \"%s\"\n", LIGAND_NAME);
+	printf("LIGAND_NAME: %s\n", LIGAND_NAME);
+
 
 	fprintf (toml_file, "\n[SETTINGS]\n");
 	fprintf (toml_file, "# Settings for parKVFinder software\n");

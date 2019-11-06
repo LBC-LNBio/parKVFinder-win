@@ -85,7 +85,9 @@ main (int argc,
 		strcpy (PDB_NAME, parameters->PDB_NAME);
 		strcpy (OUTPUT, parameters->OUTPUT);
 		strcpy (BASE_NAME, parameters->BASE_NAME);
+		printf("LIGAND_NAME (argparser) : %s\n", LIGAND_NAME);
 		strcpy (LIGAND_NAME, parameters->LIGAND_NAME);
+		printf("LIGAND_NAME (argparser) : %s\n", LIGAND_NAME);
 		strcpy (dictionary_name, parameters->dictionary_name);
 		strcpy (resolution_flag, parameters->resolution_flag);
 		volume_cutoff = parameters->volume_cutoff;
@@ -105,6 +107,7 @@ main (int argc,
 		free (parameters);
 	}
 	else {
+			printf("LIGAND_NAME (parKVFinder) : %s\n", LIGAND_NAME);
 		/* Save command line arguments inside KVFinder variables */
 		verbose_flag = argparser (argc,
 		                          argv,
@@ -128,6 +131,7 @@ main (int argc,
 		                          &X1, &Y1, &Z1, &X2, &Y2, &Z2, &X3, &Y3, &Z3, &X4, &Y4, &Z4,
 		                          &bX1, &bY1, &bZ1, &bX2, &bY2, &bZ2, &bX3, &bY3, &bZ3, &bX4, &bY4, &bZ4);
 	}
+			printf("LIGAND_NAME (parKVFinder) : %s\n", LIGAND_NAME);
 	resolution_input (resolution_flag, &Vvoxel, &resolution_mode, &h); /*Set Vvoxel, step size and resolution_mode*/
 	tablesize = define_table (TABLE, dictionary_name); /*Read dictionary file and return number of residues*/
 	if (verbose_flag)
@@ -451,6 +455,7 @@ main (int argc,
 	/* Write results file */
 	if (verbose_flag)
 	    fprintf (stdout, "> Writing results file\n");
+	printf("LIGAND_NAME (results) : %s\n", LIGAND_NAME);
 	write_results (output_results, PDB_NAME, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav); /* Windows */
 //	write_results (output_results, pdb_name, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav);
 
