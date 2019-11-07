@@ -100,12 +100,6 @@ write_results (char *output_results,
 	         pdb_name,
 	         output_pdb,
 	         LIGAND_NAME);
-//	if (strcmp (LIGAND_NAME, "-") == 0){
-//		fprintf (results_file, "LIGAND = \"\"\n\n");
-//	}
-//	else
-//		fprintf (results_file, "LIGAND = \"%s\"\n\n", LIGAND_NAME);
-
 
 	/* Parameters */
 	fprintf (results_file, "[PARAMETERS]\nRESOLUTION = \"%s\"\nSTEP_SIZE = %s\n\n", resolution_flag, step_flag);

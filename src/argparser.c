@@ -76,7 +76,7 @@ create_residues_box (char *box_name,
     }
 
     if (*Xmax < *Xmin || *Zmax < *Zmin || *Zmax < *Zmin) {
-        fprintf(stderr, "Error: Residues provided in residues box file has not been found in the PDB file!\n");
+        fprintf(stderr, "\033[0;31mError:\033[0m Residues provided in residues box file has not been found in the PDB file!\n");
         exit(-1);
     }
 
@@ -375,166 +375,16 @@ init80 (char S[80])
 }
 
 void
-format_variable (char* variable,
-                 int a,
-                 int b,
-                 char AUX[25])
-{
-    /* Declare variables */
-	int i;
-
-    /* Extract process */
-	for (i = a; i < b; i++)
-	    AUX[i - a] = variable[i];
-
-	/* Mark last position in S[] */
-	for (i; i < 25; i++)
-	    AUX[i] = ' ';
-	AUX[25] = '\0';
-
-}
-
-
-void
-format_text (char* description,
-             int a,
-             int b,
-             char AUX[55])
-{
-    /* Declare variables */
-	int i;
-
-    /* Extract process */
-	for (i = a; i < b; i++)
-	    AUX[i - a] = description[i];
-
-    /* Mark last position in S[] */
-	for (i; i < 55; i++)
-	    AUX[i] = ' ';
-	AUX[55] = '\0';
-
-}
-
-void
-format_title (char *title,
-              int a,
-              int b,
-              char AUX[80])
-{
-    /* Declare variables */
-	int i;
-
-    /* Extract process */
-	for (i = a; i < b; i++)
-	    AUX[i - a] = title[i];
-
-	/* Mark last position in S[] */
-	for (i; i < 80; i++)
-	    AUX[i] = ' ';
-	AUX[80] = '\0';
-
-}
-
-void
-print_line (char *title)
-{
-    /* Declare variables */
-	char TITLE[80];
-	int i, j, space;
-
-	/* Prepare title */
-	i = 0;
-	while (i < (int) strlen (title)) {
-
-		/* Define start of print */
-		if (title[i] == ' ')
-		    i++;
-
-		/* Define end of print */
-		for (j = i + 80 - 15; j < i + 80; j++)
-		    if (title[j] == ' ')
-		        space = j - (i + 80);
-		format_title (title, i, i + 80 + space, TITLE);
-		printf ("%s\n", TITLE);
-		i = i + 80 + space;
-		init80 (TITLE);
-
-	}
-	printf("\n");
-
-}
-
-void
-print_arguments (char *variable,
-                  char *description,
-                  char *extra)
-{
-    /* Declare variables */
-	char FLAG[25], DESCRIPTION[55];
-	int i, j, space;
-
-	/* Prepare command line argument */
-	format_variable (variable, 0, strlen (variable), FLAG);
-	printf ("%s", FLAG);
-	init25 (FLAG);
-
-	/* Prepare command line argument description */
-	if (description != NULL) {
-
-		/* Initialize counter */
-		i = 0;
-		while(i < (int) strlen (description)) {
-
-			/* Define start of print */
-			if (description[i] == ' ')
-			    i++;
-			/* Define end of print */
-			for(j = i + 55 - 15; j < i + 55; j++)
-			    if (description[j] == ' ')
-			        space = j - (i + 55);
-			format_text (description, i, i + 55 + space, DESCRIPTION);
-			if (i == 0)
-			    printf ("%s\n", DESCRIPTION);
-			else
-			    printf ("%s%s\n", FLAG, DESCRIPTION);
-			i = i + 55 + space;
-			init55 (DESCRIPTION);
-
-		}
-
-	}
-
-	/* Prepare extra argument */
-	i = 0;
-	if (extra != NULL) {
-
-		while(i < (int) strlen (extra)) {
-
-			/* Define start of print */
-			if (extra[i] == ' ')
-			    i++;
-			/* Define end of print */
-			for (j = i + 55 - 15; j < i + 55; j++)
-			    if (extra[j] == ' ')
-			        space = j - (i + 55);
-			format_text (extra, i, i + 55 + space, DESCRIPTION);
-			printf ("%s%s\n", FLAG, DESCRIPTION);
-			i = i + 55 + space;
-			init55 (DESCRIPTION);
-
-		}
-
-	}
-	printf ("\n");
-
-}
-
-void
 print_header ()
 {
 
-	print_line("parKVFinder (parallel KVFinder) software identifies and describes cavities in target biomolecular structure using a dual probe system.");
-	print_line("The description includes spatial and constitutional characterization. Spatial characterization includes shape, volume and area. Constitutional characterization includes amino acids that form the identified cavities.");
+	fprintf (stdout, "parKVFinder (parallel KVFinder) software identifies and describes cavities in\n");
+	fprintf (stdout, "target biomolecular structure using a dual probe system.\n");
+	fprintf (stdout, "\n");
+	fprintf (stdout, "The description includes spatial and constitutional characterization. Spatial \n");
+	fprintf (stdout, "description includes shape, volume and area. Constitutional description includes\n");
+	fprintf (stdout, "amino acids that form the identified cavities.\n");
+	fprintf (stdout, "\n");
 
 }
 
@@ -542,42 +392,73 @@ void
 print_usage ()
 {
 
-	print_line("Usage: parKVFinder PDB [options], where PDB is a path to a target PDB file and options are:");
-	print_arguments("Options:", "", NULL);
-	print_arguments("   -h, --help", "Show this help message.", NULL);
-	print_arguments("   -v, --version", "Show parKVFinder version number.", NULL);
-	print_arguments("   --verbose", "Print extra information to stdout.", NULL);
+	fprintf (stdout, "Usage: parKVFinder PDB [options],\n");
+	fprintf (stdout, "\twhere PDB is a path to a target PDB file.\n");
+  	fprintf (stdout, "\n");
+	fprintf (stdout, "Options:\n");
+	fprintf (stdout, "  -h, --help\n");
+	fprintf (stdout, "\t  Display this help message.\n");
+	fprintf (stdout, "  -v, --version\n");
+	fprintf (stdout, "\t  Display parKVFinder version.\n");
+	fprintf (stdout, "  --verbose\n");
+	fprintf (stdout, "\t  Print extra information to stdout.\n");
+	fprintf (stdout, "\n");
 
 }
 
 void
 print_options ()
 {
+
 	/* GENERAL KVFINDER PARAMETERS */
-	print_arguments ("General options:", NULL, NULL);
-	print_arguments ("   -p, --parameters", "Define path to parameters file.", NULL);
-	print_arguments ("   -d, --dictionary", "Define path to dictionary file.", NULL);
-	print_arguments ("   -r, --resolution", "Define resolution mode (Off, Low, Medium, High)", "Default: Low");
-	print_arguments ("   -s, --step", "Define step size (grid spacing).", "Default: 0.0 A");
-	print_arguments ("   -i, --probe_in", "Define probe in size.", "Default: 1.4 A");
-	print_arguments ("   -o, --probe_out", "Define probe out size.", "Default: 4.0 A");
-	print_arguments ("   --volume_cutoff", "Define cavities volume filter.", "Default: 5.0 A^3");
-	print_arguments ("   --removal_distance", "Define removal distance when comparing probes surfaces.", "Default: 2.4 A");
-	print_arguments ("   -k, --filled", "Output filled cavities. Increase memory consumption for molecular visualization.", NULL);
-	print_arguments ("   -t, --template", "Create a template parKVFinder parameters file with default parameters.", "Default: parameters.toml");
-	print_arguments ("   -B, --box", "Define a search box where parKVFinder will detect cavities.", NULL);
+  	fprintf (stdout, "General options:\n");
+	fprintf (stdout, "  -p, --parameters\t[<.toml>]\n");
+	fprintf (stdout, "\t  Define path to parameters file.\n");
+	fprintf (stdout, "  -d, --dictionary\t[<dictionary>]\n");
+	fprintf (stdout, "\t  Define path to a custom dictionary file.\n");
+	fprintf (stdout, "  -r, --resolution\t<enum>\t\t(Low)\n");
+	fprintf (stdout, "\t  Define resolution mode. Options include: Off, Low, Medium and High.\n");
+	fprintf (stdout, "  -s, --step\t\t<real>\t\t(0.0)\n");
+	fprintf (stdout, "\t  Define step size (grid spacing).\n");
+	fprintf (stdout, "  -i, --probe_in\t<real>\t\t(1.4)\n");
+	fprintf (stdout, "\t  Define probe in size.\n");
+	fprintf (stdout, "  -o, --probe_out\t<real>\t\t(4.0)\n");
+	fprintf (stdout, "\t  Define probe out size.\n");
+	fprintf (stdout, "  --volume_cutoff\t<real>\t\t(5.0)\n");
+	fprintf (stdout, "\t  Define cavities volume filter.\n");
+	fprintf (stdout, "  --removal_distance\t<real>\t\t(2.4)\n");
+	fprintf (stdout, "\t  Define removal distance when comparing probes surfaces.\n");
+	fprintf (stdout, "  -t, --template\t\t\t(paramters.toml)\n");
+	fprintf (stdout, "\t  Create a parameter file template with defined parameters in current\n");
+	fprintf (stdout, "\t  working directory.\n");
+	fprintf (stdout, "\n");
 	/* BOX ADJUSTMENT PARAMETERS */
-	print_arguments ("Box adjustment options:", NULL, NULL);
-	print_arguments ("   --custom_box", "Define a custom search box based on a file containing the minimum and maximum cartesian values of each axis in angstrom.", NULL);
-	print_arguments ("   --residues_box", "Automatically set a search box based a file containing a tab-separated list of residues.", NULL);
-	print_arguments ("   --padding", "Define residues box padding. Adds a padding length in each box direction.", "Default: 3.5 A");
+	fprintf (stdout, "Box adjustment options:\n");
+	fprintf (stdout, "  -B, --box\n");
+	fprintf (stdout, "\t  Define a search box mode where parKVFinder will detect cavities.\n");
+	fprintf (stdout, "  --custom_box\t\t[<file>]\n");
+	fprintf (stdout, "\t  Define a custom search box based on a file containing the minimum and \n");
+	fprintf (stdout, "\t  maximum cartesian values of each axis in angstrom.\n");
+	fprintf (stdout, "  --residues_box\t[<file>]\n");
+	fprintf (stdout, "\t  Automatically set a search box based a file containing a tab-separated\n");
+	fprintf (stdout, "\t  list of residues.\n");
+	fprintf (stdout, "  --padding\t\t<real>\t\t(3.5)\n");
+	fprintf (stdout, "\t  Define residues box padding. Adds a length in each box direction.\n");
+	fprintf (stdout, "\n");
 	/* SURFACE MODE */
-	print_arguments ("Surface options:", NULL, NULL);
-	print_arguments ("   -S, --surface", "Define a surface representation. The options include: SAS and VdW. SAS specifies solvent accessible surface. VdW specifies van der Waals molecular surface.", "Default: VdW");
+	fprintf (stdout, "Surface options:\n");
+	fprintf (stdout, "  -S, --surface\t\t<enum>\t\t(VdW)\n");
+	fprintf (stdout, "\t  Define a surface representation. Options include: SAS and VdW. SAS\n");
+	fprintf (stdout, "\t  specifies solvent accessible surface. VdW specifies van der Waals\n");
+	fprintf (stdout, "\t  molecular surface.\n");
+	fprintf (stdout, "\n");
 	/* LIGAND ADJUSTMENT PARAMETERS */
-	print_arguments ("Ligand options:", NULL, NULL);
-	print_arguments ("   -L, --ligand", "Define path to ligand PDB file.", "");
-	print_arguments ("   --ligand_cutoff", "Define ligand radius distance cutoff.", "Default: 5.0 A");
+	fprintf (stdout, "Ligand options:\n");
+	fprintf (stdout, "  -L, --ligand\t\t[<.pdb>]\n");
+	fprintf (stdout, "\t  Define path to ligand PDB file.\n");
+	fprintf (stdout, "  --ligand_cutoff\t<real>\t\t(5.0)\n");
+	fprintf (stdout, "\t  Define ligand radius distance cutoff.\n");
+	fprintf (stdout, "\n");
 
 }
 
@@ -585,13 +466,13 @@ void
 print_help()
 {
 
-	printf ("================================================================================\n");
-	printf ("============================= parKVFinder help menu ============================\n");
+	fprintf (stdout, "================================================================================\n");
+	fprintf (stdout, "============================= parKVFinder help menu ============================\n");
 	print_header ();
 	print_usage ();
 	print_options ();
-	printf ("================================================================================\n");
-	printf ("================================================================================\n");
+	fprintf (stdout, "================================================================================\n");
+	fprintf (stdout, "================================================================================\n");
 
 }
 
@@ -640,6 +521,12 @@ argparser (int argc,
            double *bY4,
            double *bZ4)
 {
+
+	/* Print Warning! if KVFinder_PATH was not found */
+	if ( strcmp (getenv ("KVFinder_PATH"), "") == 0 ) {
+		fprintf (stderr, "\033[0;33mWarning:\033[0m KVFinder_PATH system variable not found.\n");
+		fprintf (stderr, "Export KVFinder_PATH to your system variables.\n\n");
+	}
 
     /* Declare variables */
 	/* Flag set by ‘--verbose’. */
@@ -729,21 +616,21 @@ argparser (int argc,
 			case 0:
 				/* LIGAND CUTOFF */
 				if (strcmp ("ligand_cutoff", long_options[option_index].name) == 0) {
-					if (check_input (optarg, "Error: Invalid ligand cutoff input!\n")) {
+					if (check_input (optarg, "\033[0;31mError:\033[0m Invalid ligand cutoff input!\n")) {
 						*ligand_cutoff = atof (optarg);
 						lc_flag = 1;
 					}
 				}
 				/* VOLUME CUTOFF */
 				if (strcmp ("volume_cutoff", long_options[option_index].name) == 0) {
-					if (check_input (optarg, "Error: Invalid volume cutoff input!\n")) {
+					if (check_input (optarg, "\033[0;31mError:\033[0m Invalid volume cutoff input!\n")) {
 						*volume_cutoff = atof (optarg);
 						vc_flag = 1;
 					}
 				}
 				/* REMOVAL DISTANCE */
 				if (strcmp ("removal_distance", long_options[option_index].name) == 0) {
-					if (check_input (optarg, "Error: Invalid removal distance input!\n")) {
+					if (check_input (optarg, "\033[0;31mError:\033[0m Invalid removal distance input!\n")) {
 						*removal_distance = atof (optarg);
 						rd_flag = 1;
 					}
@@ -754,13 +641,13 @@ argparser (int argc,
 					box_name = optarg;
 					rb_flag = 1;
 					if (access (box_name, F_OK)) {
-						fprintf (stderr, "Error: Residues list file does not exist!\n");
+						fprintf (stderr, "\033[0;31mError:\033[0m Residues list file does not exist!\n");
 						exit (-1);
 					}
 				}
 				/* residues box padding */
 				if (strcmp ("padding", long_options[option_index].name) == 0) {
-					if (check_input (optarg, "Error: Invalid residue box padding value input!\n")) {
+					if (check_input (optarg, "\033[0;31mError:\033[0m Invalid residue box padding value input!\n")) {
 						padding = atof (optarg);
 						prb_flag = 1;
 					}
@@ -770,7 +657,7 @@ argparser (int argc,
 					box_name = optarg;
 					cb_flag = 1;
 					if (access (box_name, F_OK)) {
-						fprintf (stderr, "Error: Custom box file does not exist!\n");
+						fprintf (stderr, "\033[0;31mError:\033[0m Custom box file does not exist!\n");
 						exit (-1);
 					}
 				}
@@ -790,7 +677,7 @@ argparser (int argc,
 				}
 				/* If input is not SAS or VdW, print error */
 				else {
-					fprintf (stderr, "Error: Wrong surface representation selected!\nPossible inputs: SAS, VdW.\n");
+					fprintf (stderr, "\033[0;31mError:\033[0m Wrong surface representation selected!\nPossible inputs: SAS, VdW.\n");
 					exit (-1);
 				}
 				surface_flag = 1;
@@ -823,7 +710,7 @@ argparser (int argc,
 				*ligand_mode = 1;
 				l_flag = 1;
 				if (access (LIGAND_NAME, F_OK)) {
-					fprintf (stderr, "Error: Ligand PDB file does not exist.\n");
+					fprintf (stderr, "\033[0;31mError:\033[0m Ligand PDB file does not exist.\n");
 					exit (-1);
 				}
 			    break;
@@ -831,7 +718,7 @@ argparser (int argc,
             /* PROBE IN */
 			case 'i':
 			    /*Check if input is numeric*/
-				if (check_input (optarg, "Error: Invalid probe in input!\n")) {
+				if (check_input (optarg, "\033[0;31mError:\033[0m Invalid probe in input!\n")) {
 				    /*Save probe in inside probe_in variable*/
 					*probe_in = atof (optarg);
 					i_flag = 1;
@@ -841,7 +728,7 @@ argparser (int argc,
             /* PROBE OUT */
 			case 'o':
 			    /* Check if input is numeric */
-				if (check_input (optarg, "Error: Invalid probe out input!\n")) {
+				if (check_input (optarg, "\033[0;31mError:\033[0m Invalid probe out input!\n")) {
 				    /* Save probe out inside probe_out variable */
 					*probe_out = atof (optarg);
 					o_flag = 1;
@@ -851,7 +738,7 @@ argparser (int argc,
             /* STEP SIZE */
 			case 's':
 				/*Check if input is numeric*/
-				if (check_input (optarg, "Error: Invalid step size input!\n")) {
+				if (check_input (optarg, "\033[0;31mError:\033[0m Invalid step size input!\n")) {
 				    /* Save step size inside h variable */
 					*h = atof (optarg);
 					s_flag = 1;
@@ -872,7 +759,7 @@ argparser (int argc,
 				    if (strcmp (resolution_flag, "Low") == 0);
 				/* If input is not Off, Low, Medium, High, print error */
 				else {
-					fprintf (stderr, "Error: Wrong resolution selected!\nPossible inputs: Off, Low, Medium, High.\n");
+					fprintf (stderr, "\033[0;31mError:\033[0m Wrong resolution selected!\nPossible inputs: Off, Low, Medium, High.\n");
 					exit(-1);
 				}
 				r_flag = 1;
@@ -884,7 +771,7 @@ argparser (int argc,
 				_fullpath(dictionary_name, optarg, 500); /* Windows */
 				d_flag = 1;
 				if (access (dictionary_name, F_OK)) {
-					fprintf (stderr, "Error: Dictionary file does not exist!\n");
+					fprintf (stderr, "\033[0;31mError:\033[0m Dictionary file does not exist!\n");
 					exit (-1);
 				}
 			    break;
@@ -895,12 +782,12 @@ argparser (int argc,
 				p_flag = 1;
 				/* Check if parameters file exists */
 				if (access(parameters_name, F_OK)) {
-					fprintf (stderr, "Error: Parameter file does not exist!\n");
+					fprintf (stderr, "\033[0;31mError:\033[0m Parameter file does not exist!\n");
 					exit (-1);
 				}
 				/* Check parameters file extension*/
 				if (strcmp (get_file_extension(parameters_name), "toml")) {
-					fprintf (stderr, "Error: Wrong parameters file extension!\narg: [\'%s\']\n", parameters_name);
+					fprintf (stderr, "\033[0;31mError:\033[0m Wrong parameters file extension!\narg: [\'%s\']\n", parameters_name);
 					exit (-1);
 				}
 			    break;
@@ -934,7 +821,7 @@ argparser (int argc,
 	Parameters file must be set alone */
 	if (p_flag) {
 		if (d_flag || l_flag || t_flag || r_flag || o_flag || i_flag || s_flag || vc_flag || lc_flag || rd_flag) {
-			fprintf (stderr, "Error: Just define parameters file argument!\n");
+			fprintf (stderr, "\033[0;31mError:\033[0m Just define parameters file argument!\n");
 			exit (-1);
 		}
 		else {
@@ -983,7 +870,7 @@ argparser (int argc,
 	/* User provided more than one PDB file */
 	if (argc-optind > 1) {
 
-		fprintf (stderr, "Error: Incorrect number of PDB files!\nargs: [\'%s\'", argv[optind++]);
+		fprintf (stderr, "\033[0;31mError:\033[0m Incorrect number of PDB files!\nargs: [\'%s\'", argv[optind++]);
 		while (optind < argc) {
 			fprintf (stderr, ", \'%s\'", argv[optind++]);
 		}
@@ -1030,18 +917,18 @@ argparser (int argc,
 
             /* Check if provided PDB file exist */
             if (access (PDB_NAME, F_OK)) {
-                fprintf (stderr, "Error: PDB file does not exist.\n");
+                fprintf (stderr, "\033[0;31mError:\033[0m PDB file does not exist.\n");
                 exit (-1);
             }
             /* Check PDB file extension*/
             if (strcmp (get_file_extension (PDB_NAME), "pdb")) {
-                fprintf (stderr, "Error: Wrong PDB file extension!\narg: [\'%s\']\n", PDB_NAME);
+                fprintf (stderr, "\033[0;31mError:\033[0m Wrong PDB file extension!\narg: [\'%s\']\n", PDB_NAME);
             }
 
 	    }
         /* User do not provide a PDB file */
         else {
-            fprintf (stderr, "Error: Missing path to PDB file!\n\n");
+            fprintf (stderr, "\033[0;31mError:\033[0m Missing path to PDB file!\n\n");
             print_usage ();
             exit (-1);
         }
@@ -1121,7 +1008,7 @@ argparser (int argc,
             if (r_flag) {
 
                 if (strcmp (resolution_flag, "Off") == 0) {
-                    fprintf (stderr, "Error: Resolution mode is Off! Step size (grid spacing) must be defined!\n");
+                    fprintf (stderr, "\033[0;31mError:\033[0m Resolution mode is Off! Step size (grid spacing) must be defined!\n");
                     exit (-1);
                 }
                 *h = 0.0;
@@ -1136,7 +1023,7 @@ argparser (int argc,
 	}
 	else {
 
-		fprintf (stderr, "Error: Resolution mode is On! Step size (grid spacing) should not be defined!\n");
+		fprintf (stderr, "\033[0;31mError:\033[0m Resolution mode is On! Step size (grid spacing) should not be defined!\n");
 		exit (-1);
 
 	}
@@ -1155,7 +1042,7 @@ argparser (int argc,
 	    /* Ligand mode is not set */
 		if (!*ligand_mode) {
 
-		    fprintf (stderr, "Error: Path to ligand PDB file is not provided! ");
+		    fprintf (stderr, "\033[0;31mError:\033[0m Path to ligand PDB file is not provided! ");
 			fprintf (stderr, "Define path through \'-L\' or \'--ligand_mode\' flag.\n");
 			exit(-1);
 
@@ -1187,14 +1074,14 @@ argparser (int argc,
 
 		if (rb_flag || cb_flag) {
 
-		    fprintf (stderr, "Error: Whole protein mode and Box adjustment options are chosen together! ");
+		    fprintf (stderr, "\033[0;31mError:\033[0m Whole protein mode and Box adjustment options are chosen together! ");
 			fprintf (stderr, "Define \'box\' flag or remove Box adjustment option (\'custom_box\' or \'residues_box\').\n");
 			exit (-1);
 
 		}
 		if (prb_flag) {
 
-			fprintf (stderr, "Error: Residue box mode is not chosen! Residue box padding should not be defined.\n");
+			fprintf (stderr, "\033[0;31mError:\033[0m Residue box mode is not chosen! Residue box padding should not be defined.\n");
 			exit (-1);
 
 		}
@@ -1210,7 +1097,7 @@ argparser (int argc,
 
 		if (rb_flag && cb_flag) {
 
-            fprintf (stderr, "Error: Just choose one box adjustment options! ");
+            fprintf (stderr, "\033[0;31mError:\033[0m Just choose one box adjustment options! ");
 			fprintf (stderr, "Define \'residues_box\' or \'custom_box\' options.\n");
 			exit (-1);
 
@@ -1234,7 +1121,7 @@ argparser (int argc,
                      /* Padding incorrectly defined */
                     if (prb_flag) {
 
-                        fprintf (stderr, "Error: Residue box padding should not be defined in custom box option!\n");
+                        fprintf (stderr, "\033[0;31mError:\033[0m Residue box padding should not be defined in custom box option!\n");
                         exit (-1);
 
                     }
@@ -1256,7 +1143,7 @@ argparser (int argc,
 		    }
 		    else {
 
-                fprintf (stderr, "Error: Choose a box adjustment option! ");
+                fprintf (stderr, "\033[0;31mError:\033[0m Choose a box adjustment option! ");
                 fprintf (stderr, "Define \'residues_box\' or \'custom_box\' options.\n");
                 exit (-1);
 

@@ -168,12 +168,9 @@ readTOML (toml *p,
     /* TOML file not found */
 	if (parameters_file == NULL) {
 
-	    /* Print error */
-		printf ("Parameters reading error! Please select a valid parameters and try again.\n");
-		/* Close TOML file */
-		fclose (parameters_file);
-		/* Exit code and return -1 */
-		exit (-1);
+	    /* Print error and exit*/
+		printf ("\033[0;31mError:\033[0m Invalid parameters file! Please select a valid parameters and try again.\n");
+		exit(-1);
 
 	}
 	/* TOML file found */
