@@ -52,7 +52,7 @@ main (int argc,
 	int m, n, o, i, j, k, ncav, tablesize, iterator;
 	char TABLE[TABLE_SIZE][RES_SIZE], PDB_NAME[NAME_MAX], LIGAND_NAME[NAME_MAX], dictionary_name[DIC_NAME_MAX], OUTPUT[NAME_MAX], BASE_NAME[NAME_MAX];
 	char boxmode_flag[6], resolution_flag[7], whole_protein_flag[6], mode_flag[6], surface_flag[6], step_flag[6], kvpmode_flag[6];
-	char log_buffer[4096], *output, *output_folder, *output_pdb, *output_results, *pdb_name;
+	char log_buffer[4096], *output, *output_folder, *output_pdb, *output_results, pdb_name[NAME_MAX];
 	dict *DIC[TABLE_SIZE];
 	FILE *parameters_file, *log_file;
 	atom *p;
