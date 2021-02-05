@@ -93,7 +93,7 @@ define_table (char TABLE[TABLE_SIZE][RES_SIZE],
 	if (arq == NULL){
 
 		/* Print error and exit */
-	    printf ("\033[0;31mError:\033[0m Residues dictionary file not found!\n");
+	    fprintf (stderr, "Error: Residues dictionary file not found!\n");
 	    exit(-1);
 
 	}
@@ -138,7 +138,7 @@ dictionary_load (dict *DIC[TABLE_SIZE],
 	if (dictionary_file == NULL) {
 
 	    /* Print error and exit */
-		printf ("\033[0;31mError:\033[0m Invalid dictionary file. Please select a valid dictionary filename and try again.\n");
+		fprintf (stderr, "Error: Invalid dictionary file. Please select a valid dictionary filename and try again.\n");
 		exit(-1);
 
 	}

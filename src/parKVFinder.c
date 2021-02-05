@@ -136,40 +136,29 @@ main (int argc,
 
 	/* Preparing files paths */
 	/* Windows */
-	if (OUTPUT[strlen (OUTPUT) - 1] == '\\') {
-		if (OUTPUT[strlen (OUTPUT) - 2] == '\\') {
-			if (OUTPUT[strlen (OUTPUT - 3)] == '\\') {
-				OUTPUT[strlen (OUTPUT) - 1] = '\0';
-			}
-			output = combine(OUTPUT, "KV_Files\\\\");
-		}
-		else {
-		output =  combine(OUTPUT, "\\KV_Files\\\\");
-		}
-	}
-	else {
-		if (OUTPUT[0] == '\0')
-			output = combine(OUTPUT, "KV_Files\\\\");
-		else
-			output = combine(OUTPUT, "\\\\KV_Files\\\\");
-	}
+  convert_path_windows(OUTPUT);
+  output = combine(OUTPUT, "KV_Files\\\\");
+	// if (OUTPUT[strlen (OUTPUT) - 1] == '\\') {
+	// 	if (OUTPUT[strlen (OUTPUT) - 2] == '\\') {
+	// 		if (OUTPUT[strlen (OUTPUT - 3)] == '\\') {
+	// 			OUTPUT[strlen (OUTPUT) - 1] = '\0';
+	// 		}
+	// 		output = combine(OUTPUT, "KV_Files\\\\");
+	// 	}
+	// 	else {
+	// 	output =  combine(OUTPUT, "\\KV_Files\\\\");
+	// 	}
+	// }
+	// else {
+	// 	if (OUTPUT[0] == '\0')
+	// 		output = combine(OUTPUT, "KV_Files\\\\");
+	// 	else
+	// 		output = combine(OUTPUT, "\\\\KV_Files\\\\");
+	// }
 
-//	if (OUTPUT[strlen(OUTPUT)-1] == '\\') { /* Windows */
-//		if (OUTPUT[strlen(OUTPUT)-2] == '\\') /* Windows */
-//		    OUTPUT[strlen(OUTPUT)-1] = '\0';
-//		output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
-//	}
-//	else {
-//		if(OUTPUT[0] == '\0')
-//		    output = combine(OUTPUT, "KV_Files\\\\"); /* Windows */
-//		else
-//		    output = combine(OUTPUT, "\\\\KV_Files\\\\"); /* Windows */
-//	}
-//	pdb_name = realpath (PDB_NAME, NULL);
 	_fullpath(pdb_name, PDB_NAME, 500); /* Windows */
 
 	/* Create KV_Files folder */
-//	mkdir (output, S_IRWXU);
 	mkdir (output); /* Windows */
 
 	/* Create log_file */
@@ -179,7 +168,6 @@ main (int argc,
 
 	/* Create BASE_NAME folder for the running analysis */
 	output = combine (output, BASE_NAME); /* Include BASE_NAME folder in KV_Files */
-//	mkdir (output, S_IRWXU); /* Create BASE_NAME folder in KV_Files */
 	mkdir (output); /* Windows */
 	output_folder = combine (output, "\\\\"); /* Include bar after appending BASE_NAME */ /* Windows */
 	output = combine (output_folder, BASE_NAME); /* Include BASE_NAME to output path in BASE_NAME folder */
@@ -455,7 +443,6 @@ main (int argc,
 	if (verbose_flag)
 	    fprintf (stdout, "> Writing results file\n");
 	write_results (output_results, PDB_NAME, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav); /* Windows */
-//	write_results (output_results, pdb_name, output_pdb, LIGAND_NAME, resolution_flag, step_flag, ncav);
 
 	/*Evaluate elapsed time*/
     gettimeofday (&toc, NULL);
@@ -468,6 +455,6 @@ main (int argc,
 	fflush (log_file);
 	fclose (log_file);
 
-	return ncav;
+	return 0;
 
 }

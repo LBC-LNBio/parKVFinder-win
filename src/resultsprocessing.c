@@ -10,7 +10,6 @@ software*/
 /* Import custom modules */
 #include "dictionaryprocessing.h"
 #include "resultsprocessing.h"
-#include "tomlprocessing.h"
 
 /* Insert residue information (resnum, chain, resname, resclass) in linked list (res_info) inside KVresults structure */
 void
@@ -47,25 +46,9 @@ insert_res (int resnum,
 		res_info->chain = chain;
 		res_info->resname = resname;
 
-		/* Special case II: Insertion in the head end */
-		if (KVFinder_results[kvnum].res_info->resnum >= resnum) {
-
-			/* Pass generic structure to linked list */
-			res_info->next = KVFinder_results[kvnum].res_info;
-			KVFinder_results[kvnum].res_info = res_info;
-
-		}
-		else {
-
-			/* Locate node before the point of insertion */
-			while (KVFinder_results[kvnum].res_info->next != NULL && KVFinder_results[kvnum].res_info->resnum < resnum)
-				KVFinder_results[kvnum].res_info = KVFinder_results[kvnum].res_info->next;
-
-			/* Pass generic structure to linked list */
-			res_info->next = KVFinder_results[kvnum].res_info->next;
-			KVFinder_results[kvnum].res_info->next = res_info;
-
-		}
+		/* Pass generic structure to linked list */
+		res_info->next = KVFinder_results[kvnum].res_info->next;
+		KVFinder_results[kvnum].res_info->next = res_info;
 	}
 }
 
@@ -83,7 +66,7 @@ write_results (char *output_results,
 	char results[1024];
 	int kvnum, iterator;
 
-    /* Open KVFinder.results.toml */
+  /* Open KVFinder.results.toml */
 	results_file = fopen (output_results, "w");
 	/* Save memory for buffer */
 	memset (results, '\0', sizeof (results));
@@ -92,7 +75,7 @@ write_results (char *output_results,
 
 	/* Write results file */
 	/* File header */
-	fprintf (results_file, "# TOML results file for KVFinder software\n\ntitle = \"KVFinder results file\"\n\n");
+	fprintf (results_file, "# TOML results file for parKVFinder software\n\ntitle = \"parKVFinder results file\"\n\n");
 
 	/* Files paths */
 	fprintf (results_file,
