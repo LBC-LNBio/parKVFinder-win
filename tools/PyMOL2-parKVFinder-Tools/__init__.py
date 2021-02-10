@@ -109,12 +109,12 @@ def run_plugin_gui():
     global dialog
     
     if dialog is None:
-        dialog = PyMOLKVFinderWebTools()
+        dialog = PyMOL2parKVFinderTools()
 
     dialog.show()
 
 
-class PyMOLKVFinderWebTools(QMainWindow):
+class PyMOL2parKVFinderTools(QMainWindow):
     """
     PyMOL KVFinder Web Tools
 
@@ -124,7 +124,7 @@ class PyMOLKVFinderWebTools(QMainWindow):
     """
 
     def __init__(self, server="http://localhost", port="8081"):
-        super(PyMOLKVFinderWebTools, self).__init__()
+        super(PyMOL2parKVFinderTools, self).__init__()
         from PyQt5.QtNetwork import QNetworkAccessManager
 
         # Get KVFinder_PATH
@@ -135,7 +135,7 @@ class PyMOLKVFinderWebTools(QMainWindow):
         self._default.parKVFinder = os.path.join(KVFinder_PATH, executable)
         self._default.dictionary = os.path.join(KVFinder_PATH, 'dictionary')
         
-        # Initialize PyMOLKVFinderWebTools GUI
+        # Initialize PyMOL2parKVFinderTools GUI
         self.initialize_gui()
         
         # Restore Default Parameters
@@ -1413,7 +1413,7 @@ def KVFinderWebTools() -> None:
     """ Debug KVFinderWebTools """
     from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
-    dialog = PyMOLKVFinderWebTools()
+    dialog = PyMOL2parKVFinderTools()
     dialog.setWindowTitle('KVFinder-web Tools')
     dialog.show()
     sys.exit(app.exec_())
