@@ -2,22 +2,22 @@
 # -*- coding: utf-8 -*-
 
 #####################################################################################
-#    This is the KVFinder-web server client for PyMOL. It was developed using Qt    #
-#    interface and Python. Changes in this file are not advised, as it controls     #
-#    all interactions with KVFinder-web server                                      #
+#    This is the PyMOL2 parKVFinder Tools for PyMOL v2.x. It was developed using    #
+#    Qt interface and Python. Changes in this file are not advised, as it controls  #
+#    all interactions with parKVFinder.                                             #
 #                                                                                   #
 #    PyMOL KVFinder Web Tools is free software: you can redistribute it and/or      #    
 #    modify it under the terms of the GNU General Public License as published       #
 #    by the Free Software Foundation, either version 3 of the License, or           #
 #    (at your option) any later version.                                            #
 #                                                                                   #
-#    PyMOL KVFinder Web Tools is distributed in the hope that it will be useful,    #
+#    PyMOL2 parKVFinder Tools is distributed in the hope that it will be useful,    #
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of                 #
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                  #
 #    GNU General Public License for more details.                                   #
 #                                                                                   #
 #    You should have received a copy of the GNU General Public License  along with  #
-#    PyMOL KVFinder Web Tools.  If not, see <http://www.gnu.org/licenses/>.         #
+#    PyMOL2 parKVFinder Tools.  If not, see <http://www.gnu.org/licenses/>.          #
 #                                                                                   #
 #####################################################################################
 
@@ -99,7 +99,7 @@ def __init_plugin__(app=None):
     Add an entry to the PyMOL v2.x "Plugin" menu
     '''
     from pymol.plugins import addmenuitemqt
-    addmenuitemqt('PyMOL2 KVFinder-web Tools', run_plugin_gui)
+    addmenuitemqt('PyMOL2 parKVFinder Tools', run_plugin_gui)
 
 
 def run_plugin_gui():
@@ -163,7 +163,7 @@ class PyMOLKVFinderWebTools(QMainWindow):
         # from pymol.Qt.utils import loadUi
 
         # populate the QMainWindow from our *.ui file
-        uifile = os.path.join(os.path.dirname(__file__), 'PyMOL2-parKVFinder-tools.ui')
+        uifile = os.path.join(os.path.dirname(__file__), 'PyMOL2-parKVFinder-Tools.ui')
         loadUi(uifile, self)
 
         # ScrollBars binded to QListWidgets in Descriptors
