@@ -35,29 +35,17 @@ dialog = None
 
 
 ########## Relevant information ##########
-# Days until job expire                  #
-days_job_expire = 1                      #
-                                         #
-# Data limit                             #
-data_limit = '1 Mb'                      #
-                                         #
-# Timers (msec)                          #
-time_restart_job_checks = 60000          #
-time_server_down = 60000                 #
-time_no_jobs = 60000                     #
-time_between_jobs = 10000                #
-time_wait_status = 1000                  #
-                                         #
-# Times jobs completed with downloaded   #
-# results are not checked in server      #
-times_job_completed_no_checked = 10      #
-                                         #
 # Verbosity: print extra information     #
 # 0: No extra information                #
 # 1: Print GUI information               #
 # 2: Print Worker information            #
 # 3: Print all information (Worker/GUI)  #
 verbosity = 0                            #
+#                                        #
+# parKVFinder executable (Ubuntu/macOS)  #
+executable = 'parKVFinder'               #
+# parKVFinder executable (Windows)       #
+# executable = 'parKVFinder-win64.exe'   #
 ##########################################
 
 
@@ -69,12 +57,21 @@ class _Default(object):
         #######################
         ### Main Parameters ###
         #######################
+        self.step = 0.0
+        self.resolution = "Low"
         self.probe_in = 1.4
         self.probe_out = 4.0
         self.removal_distance = 2.4
         self.volume_cutoff = 5.0
+        self.surface = "Molecular Surface (VdW)"
+        self.cavity_representation = "Filtered"
         self.base_name = "output"
         self.output_dir_path = os.getcwd()
+        #######################
+        ### File Locations  ###
+        #######################
+        self.parKVFinder = None
+        self.dictionary = None
         #######################
         ###  Search Space   ###
         #######################
@@ -99,10 +96,10 @@ class _Default(object):
 
 def __init_plugin__(app=None):
     '''
-    Add an entry to the PyMOL "Plugin" menu
+    Add an entry to the PyMOL v2.x "Plugin" menu
     '''
     from pymol.plugins import addmenuitemqt
-    addmenuitemqt('PyMOL KVFinder-web Tools', run_plugin_gui)
+    addmenuitemqt('PyMOL2 KVFinder-web Tools', run_plugin_gui)
 
 
 def run_plugin_gui():
@@ -121,20 +118,22 @@ class PyMOLKVFinderWebTools(QMainWindow):
     """
     PyMOL KVFinder Web Tools
 
-    - Create KVFinder-web client Graphical User Interface (GUI)
-    with PyQt5 in PyMOL viewer
+    - Create parKVFinder client Graphical User Interface (GUI)
+    with PyQt5 in PyMOL v2.x viewer
     - Define functions and callbacks for GUI
     """
-
-    # Signals
-    msgbox_signal = pyqtSignal(bool)
 
     def __init__(self, server="http://localhost", port="8081"):
         super(PyMOLKVFinderWebTools, self).__init__()
         from PyQt5.QtNetwork import QNetworkAccessManager
 
+        # Get KVFinder_PATH
+        KVFinder_PATH = self.get_KVFinder_PATH()
+
         # Define Default Parameters
         self._default = _Default()
+        self._default.parKVFinder = os.path.join(KVFinder_PATH, executable)
+        self._default.dictionary = os.path.join(KVFinder_PATH, 'dictionary')
         
         # Initialize PyMOLKVFinderWebTools GUI
         self.initialize_gui()
@@ -146,28 +145,6 @@ class PyMOLKVFinderWebTools(QMainWindow):
         self.x = 0.0
         self.y = 0.0
         self.z = 0.0
-        
-        # Define server
-        self.server = f"{server}:{port}"
-        self.network_manager = QNetworkAccessManager()
-
-        # Check server status
-        status = _check_server_status(self.server)
-        self.set_server_status(status)
-
-        # Create ./KVFinder-web directory for jobs
-        jobs_dir = os.path.join(os.path.expanduser('~'), '.KVFinder-web')
-        try: 
-            os.mkdir(jobs_dir)
-        except FileExistsError:
-            pass
-
-        # Start Worker thread to handle available jobs
-        self._start_worker_thread()
-
-        # Get available jobs
-        self.available_jobs.addItems(_get_jobs())
-        self.fill_job_information()
 
         # Results
         self.results = None
@@ -186,7 +163,7 @@ class PyMOLKVFinderWebTools(QMainWindow):
         # from pymol.Qt.utils import loadUi
 
         # populate the QMainWindow from our *.ui file
-        uifile = os.path.join(os.path.dirname(__file__), 'PyMOL-KVFinder-web-tools.ui')
+        uifile = os.path.join(os.path.dirname(__file__), 'PyMOL2-parKVFinder-tools.ui')
         loadUi(uifile, self)
 
         # ScrollBars binded to QListWidgets in Descriptors
@@ -197,9 +174,6 @@ class PyMOLKVFinderWebTools(QMainWindow):
         scroll_bar_residues = QtWidgets.QScrollBar(self)
         self.residues_list.setVerticalScrollBar(scroll_bar_residues)
 
-        # about text
-        self.about_text.setHtml(about_text)
-
         ########################
         ### Buttons Callback ###
         ########################
@@ -209,9 +183,15 @@ class PyMOLKVFinderWebTools(QMainWindow):
         self.button_exit.clicked.connect(self.close)
         self.button_restore.clicked.connect(self.restore)
         self.button_grid.clicked.connect(self.show_grid)
+        self.button_save_parameters.clicked.connect(self.save_parameters)
         
-        # hook up Parameters button callbacks
+        # hook up Browse buttons callbacks
         self.button_browse.clicked.connect(self.select_directory)
+        self.button_browse2.clicked.connect(lambda: self.select_file("Choose parKVFinder executable", self.parKVFinder, "*"))
+        self.button_browse3.clicked.connect(lambda: self.select_file("Choose van der Waals radii dictionary", self.dictionary, "*"))
+        self.button_browse4.clicked.connect(lambda: self.select_file("Choose KVFinder Results File", self.results_file_entry, "KVFinder Results File (*.KVFinder.results.toml)"))
+
+        # hook up Refresh buttons callback
         self.refresh_input.clicked.connect(lambda: self.refresh(self.input))
         
         # hook up Search Space button callbacks
@@ -223,173 +203,83 @@ class PyMOLKVFinderWebTools(QMainWindow):
         # Ligand Adjustment
         self.refresh_ligand.clicked.connect(lambda: self.refresh(self.ligand))
 
-        # hook up methods to results tab
-        # Jobs
-        self.available_jobs.currentIndexChanged.connect(self.fill_job_information)
-        self.button_show_job.clicked.connect(self.show_id)
-        self.button_add_job_id.clicked.connect(self.add_id)
-        # Visualization
-        self.button_browse_results.clicked.connect(self.select_results_file)
+        # hook up methods to results tab        
         self.button_load_results.clicked.connect(self.load_results)
         self.volume_list.itemSelectionChanged.connect(lambda list1=self.volume_list, list2=self.area_list: self.show_cavities(list1, list2))
         self.area_list.itemSelectionChanged.connect(lambda list1=self.area_list, list2=self.volume_list: self.show_cavities(list1, list2))
         self.residues_list.itemSelectionChanged.connect(self.show_residues)
 
+        # FIXME: remove me
+        from pymol import cmd
+        cmd.load("~/remote-repos/parKVFinder/input/1FMO.pdb", "1FMO")
+
+
+    def get_KVFinder_PATH(self) -> str:
+        """
+        Get KVFinder_PATH environment variable
+        """
+        from PyQt5.QtWidgets import QMessageBox
+
+        # Get KVFinder_PATH
+        KVFinder_PATH = os.getenv('KVFinder_PATH')
+
+        # Check if KVFinder_PATH was found by os.getenv()
+        if KVFinder_PATH is None:
+            # Check configuration files
+            for fn in ['.bash_profile', '.bashrc', '.zshrc']:
+                fn = os.path.join(os.getenv('HOME'), '.bash_profile')
+                if os.path.exists(os.path.join(os.getenv('HOME'), '.bash_profile')):
+                    with open(fn, 'r') as envs:
+                        for line in envs:
+                            if line.find('export KVFinder_PATH') == 0:
+                                KVFinder_PATH = line.split("=")[1].rstrip('\n')
+                                QMessageBox.warning(self, "Warning", f"Check File Locations!\nKVFinder_PATH was foun in {fn}.")
+                                return KVFinder_PATH
+            # KVFinder_PATH was not found
+            QMessageBox.warning(self, "Warning", f"KVFinder_PATH was not found!\nSet paths on File Locations!\nOtherwise, parKVFinder cannot be executed in PyMOL2 parKVFinder Tools.")
+            return ""
+        else:
+            return KVFinder_PATH
+
 
     def run(self) -> None:
-        from PyQt5 import QtNetwork
-        from PyQt5.QtCore import QUrl, QJsonDocument
-      
-        # Create job
-        parameters = self.create_parameters()
-        if type(parameters) is dict:
-            self.job = Job(parameters)
-        else:
-            return
-
-        print('\n[==> Submitting job to KVFinder-web server ...')
-
-        # Post request
-        try:
-            # Prepare request
-            url = QUrl(f'{self.server}/create')
-            request = QtNetwork.QNetworkRequest(url)
-            request.setHeader(QtNetwork.QNetworkRequest.ContentTypeHeader, "application/json")
-
-            # Prepare data
-            data = QJsonDocument(self.job.input)
-
-            # Post requests
-            self.reply = self.network_manager.post(request, data.toJson())
-            self.reply.finished.connect(self._handle_post_response)
-        except Exception as e:
-            print(e)
-
-
-    def _handle_post_response(self) -> None:
-        from PyQt5 import QtNetwork
+        import subprocess, time
         
-        # Get QNetworkReply error status
-        er = self.reply.error()
-        
-        # Handle Post Response
-        if er == QtNetwork.QNetworkReply.NoError:
+        # Create parameters.toml
+        if self.save_parameters():
+            # Running parKVFinder
+            print(f"\n[==> Running parKVFinder for: {os.path.join(self.output_dir_path.text(), 'KV_Files', self.base_name.text(), f'{self.input.currentText()}.pdb')}")
+            start = time.time()
+            subprocess.call(self.parKVFinder.text().replace(' ', '\\ '), stdout=subprocess.PIPE)
+            ncavs = self.get_number_of_cavities()
+            elapsed_time = time.time() - start            
+            print(f"> Cavities detected: {ncavs}")
+            print(f"> Elapsed time: {elapsed_time:.2f} seconds")
+
+            # Copy parameters file 
+            os.rename("parameters.toml", f"{os.path.join(self.output_dir_path.text(), 'KV_Files', f'parameters_{self.base_name.text()}.toml')}")
             
-            reply = json.loads(str(self.reply.readAll(), 'utf-8'))
-
-            # Save job id
-            self.job.id = reply['id']
-
-            # Results not available
-            if 'output' not in reply.keys():
-                
-                if verbosity in [1, 3]:
-                    print('> Job successfully submitted to KVFinder-web server!') 
-
-                # Message to user
-                message = Message(
-                    "Job successfully submitted to KVFinder-web server!",
-                    self.job.id
-                    )
-                message.exec_()
-
-                # Save job file
-                self.job.status = 'queued'
-                self.job.save(self.job.id)
-                print(f'> Job ID: {self.job.id}')
-
-                # Add Job ID to Results tab
-                self.available_jobs.clear()
-                self.available_jobs.addItem(_get_jobs())
-                self.available_jobs.setCurrentText(self.job.id)
-                
-            # Job already sent to KVFinder-web server
+            # Load successfull run
+            self.results_file_entry.setText(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', self.base_name.text(), f'{self.base_name.text()}.KVFinder.results.toml')}")
+            if ncavs > 0:        
+                self.tabs.setCurrentIndex(2)
+                self.load_results()
+            elif ncavs == 0:
+                QMessageBox.warning(self, "Warning!", "No cavities found!")
             else:
-                status = reply["status"]
-                
-                # handle job completed
-                if status == 'completed':
-                    
-                    if verbosity in [1, 3]:
-                        print('> Job already completed in KVFinder-web server!')
-                    
-                    # Message to user
-                    message = Message(
-                        "Job already completed in KVFinder-web server!\nDisplaying results ...",
-                        self.job.id,
-                        status
-                        )
-                    message.exec_()
-
-                    # Export results
-                    self.job.output = reply
-                    try:
-                        self.job.export()
-                    except Exception as e:
-                        print("Error occurred: ", e)
-
-                    # Save job file
-                    self.job.status = status
-                    self.job.save(self.job.id)
-
-                    # Add Job ID to Results tab
-                    if self.job.id in [self.available_jobs.itemText(i) for i in range(self.available_jobs.count())]:
-                        self.available_jobs.addItem(self.job.id)
-                    self.available_jobs.setCurrentText(self.job.id)
-
-                    # Show ID
-                    self.show_id()
-
-                    # Select Results Tab
-                    self.tabs.setCurrentIndex(2)
-                
-                # handle job not completed
-                elif status == 'running' or status == 'queued':
-                    
-                    if verbosity in [1, 3]:
-                        print('> Job already submitted to KVFinder-web server!') 
-
-                    # Message to user
-                    message = Message(
-                        "Job already submitted to KVFinder-web server!",
-                        self.job.id,
-                        status
-                        )
-                    message.exec_()
-
-        elif er == QtNetwork.QNetworkReply.ConnectionRefusedError:
-            from PyQt5.QtWidgets import QMessageBox
-            
-            # Set server status in GUI
-            self.server_down()
-            
-            # Message to user
-            if verbosity in [1, 3]:
-                print("\n\033[93mWarning:\033[0m KVFinder-web server is Offline! Try again later!\n")
-            message = QMessageBox.critical(
-                self, 
-                "Job Submission", 
-                "KVFinder-web server is Offline!\n\nTry again later!"
-                )            
-
-        elif er == QtNetwork.QNetworkReply.UnknownContentError:
-            from PyQt5.QtWidgets import QMessageBox
-            
-            # Set server status in GUI
-            self.server_up()
-            
-            # Message to user
-            if verbosity in [1, 3]:
-                print(f"\n\033[91mError:\033[0mJob exceedes the maximum payload of {data_limit} on KVFinder-web server!\n")
-            message = QMessageBox.critical(
-                self, 
-                "Job Submission", 
-                f"Job exceedes the maximum payload of {data_limit} on KVFinder-web server!"
-                )       
-
+                QMessageBox.critical(self, "Error!", "An error occurred during cavity detection!")
+                return False
         else:
-            print("Error occurred: ", er)
-            print(self.reply.errorString())
+            QMessageBox.critical(self, "Error", "An error occurred while creating the parameters file! Check the parKVFinder parameters!")
+            return False
+
+        return True
+
+
+    def get_number_of_cavities(self):
+
+        results = toml.load(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', self.base_name.text(), f'{self.base_name.text()}.KVFinder.results.toml')}")
+        return len(results['RESULTS']['VOLUME'].keys())
 
     
     def show_grid(self) -> None:
@@ -593,7 +483,7 @@ class PyMOLKVFinderWebTools(QMainWindow):
                 
                 # Clean results
                 self.clean_results()
-                self.vis_results_file_entry.clear()
+                self.results_file_entry.clear()
 
         # Restore PDB and ligand input
         self.refresh(self.input)
@@ -603,12 +493,22 @@ class PyMOLKVFinderWebTools(QMainWindow):
         cmd.delete("grid")
 
         ### Main tab ###
+        self.step_size_label.setChecked(False)
+        self.step_size.setValue(self._default.step)
+        self.step_size.setEnabled(False)
+        self.resolution_label.setChecked(True)
+        self.resolution.setCurrentText(self._default.resolution)
+        self.resolution.setEnabled(True)
         self.base_name.setText(self._default.base_name)
         self.probe_in.setValue(self._default.probe_in)
         self.probe_out.setValue(self._default.probe_out)
         self.volume_cutoff.setValue(self._default.volume_cutoff)
         self.removal_distance.setValue(self._default.removal_distance)
+        self.surface.setCurrentText(self._default.surface)
+        self.cavity_representation.setCurrentText(self._default.cavity_representation)
         self.output_dir_path.setText(self._default.output_dir_path)
+        self.parKVFinder.setText(self._default.parKVFinder)
+        self.dictionary.setText(self._default.dictionary)
 
         ### Search Space Tab ###
         # Box Adjustment
@@ -655,6 +555,25 @@ class PyMOLKVFinderWebTools(QMainWindow):
             fname = QDir.toNativeSeparators(fname)
             if os.path.isdir(fname):
                 self.output_dir_path.setText(fname)
+
+        return
+
+
+    def select_file(self, caption, entry, filters) -> None:
+        """ 
+        Callback for the "Browse ..." button
+        Open a QFileDialog to select a file.
+        """
+        from PyQt5.QtWidgets import QFileDialog
+        from PyQt5.QtCore import QDir
+
+        # Get results file
+        fname, _ = QFileDialog.getOpenFileName(self, caption=caption, directory=os.getcwd(), filter=filters)
+
+        if fname:
+            fname = QDir.toNativeSeparators(fname)
+            if os.path.exists(fname):
+                entry.setText(fname)
 
         return
 
@@ -985,7 +904,7 @@ class PyMOLKVFinderWebTools(QMainWindow):
 
     def box_adjustment_help(self) -> None:
         from PyQt5 import QtWidgets, QtCore
-        text = QtCore.QCoreApplication.translate("KVFinderWeb", u"<html><head/><body><p align=\"justify\"><span style=\" font-weight:600; text-decoration: underline;\">Box Adjustment mode:</span></p><p align=\"justify\">- Create a selection (optional);</p><p align=\"justify\">- Define a <span style=\" font-weight:600;\">Padding</span> (optional);</p><p align=\"justify\">- Click on <span style=\" font-weight:600;\">Draw Box</span> button.</p><p align=\"justify\"><br/><span style=\"text-decoration: underline;\">Customize your <span style=\" font-weight:600;\">box</span></span>:</p><p align=\"justify\">- Change one item at a time (e.g. <span style=\" font-style:italic;\">Padding</span>, <span style=\" font-style:italic;\">Minimum X</span>, <span style=\" font-style:italic;\">Maximum X</span>, ...);</p><p align=\"justify\">- Click on <span style=\" font-weight:600;\">Redraw Box</span> button.<br/></p><p><span style=\" font-weight:400; text-decoration: underline;\">Delete </span><span style=\" text-decoration: underline;\">box</span><span style=\" font-weight:400; text-decoration: underline;\">:</span></p><p align=\"justify\">- Click on <span style=\" font-weight:600;\">Delete Box</span> button.<br/></p><p align=\"justify\"><span style=\"text-decoration: underline;\">Colors of the <span style=\" font-weight:600;\">box</span> object:</span></p><p align=\"justify\">- <span style=\" font-weight:600;\">Red</span> corresponds to <span style=\" font-weight:600;\">X</span> axis;</p><p align=\"justify\">- <span style=\" font-weight:600;\">Green</span> corresponds to <span style=\" font-weight:600;\">Y</span> axis;</p><p align=\"justify\">- <span style=\" font-weight:600;\">Blue</span> corresponds to <span style=\" font-weight:600;\">Z</span> axis.</p></body></html>", None)
+        text = QtCore.QCoreApplication.translate("parKVFinder", u"<html><head/><body><p align=\"justify\"><span style=\" font-weight:600; text-decoration: underline;\">Box Adjustment mode:</span></p><p align=\"justify\">- Create a selection (optional);</p><p align=\"justify\">- Define a <span style=\" font-weight:600;\">Padding</span> (optional);</p><p align=\"justify\">- Click on <span style=\" font-weight:600;\">Draw Box</span> button.</p><p align=\"justify\"><br/><span style=\"text-decoration: underline;\">Customize your <span style=\" font-weight:600;\">box</span></span>:</p><p align=\"justify\">- Change one item at a time (e.g. <span style=\" font-style:italic;\">Padding</span>, <span style=\" font-style:italic;\">Minimum X</span>, <span style=\" font-style:italic;\">Maximum X</span>, ...);</p><p align=\"justify\">- Click on <span style=\" font-weight:600;\">Redraw Box</span> button.<br/></p><p><span style=\" font-weight:400; text-decoration: underline;\">Delete </span><span style=\" text-decoration: underline;\">box</span><span style=\" font-weight:400; text-decoration: underline;\">:</span></p><p align=\"justify\">- Click on <span style=\" font-weight:600;\">Delete Box</span> button.<br/></p><p align=\"justify\"><span style=\"text-decoration: underline;\">Colors of the <span style=\" font-weight:600;\">box</span> object:</span></p><p align=\"justify\">- <span style=\" font-weight:600;\">Red</span> corresponds to <span style=\" font-weight:600;\">X</span> axis;</p><p align=\"justify\">- <span style=\" font-weight:600;\">Green</span> corresponds to <span style=\" font-weight:600;\">Y</span> axis;</p><p align=\"justify\">- <span style=\" font-weight:600;\">Blue</span> corresponds to <span style=\" font-weight:600;\">Z</span> axis.</p></body></html>", None)
         help_information = QtWidgets.QMessageBox(self)
         help_information.setText(text)
         help_information.setWindowTitle("Help")
@@ -993,84 +912,111 @@ class PyMOLKVFinderWebTools(QMainWindow):
         help_information.exec_()
 
     
-    def create_parameters(self) -> Dict[str, Any]:
-        # Create dict
-        parameters = dict()
-
-        # title
-        parameters['title'] = 'KVFinder-web job file'
-
-        # status
-        parameters['status'] = 'submitting'
-
-        # files
-        parameters['files'] = dict()
-        # pdb
+    def save_parameters(self) -> None:
+        from pymol import cmd
+        
+        # Create base directory
+        basedir = os.path.join(self.output_dir_path.text(), 'KV_Files')
+        if not os.path.isdir(basedir):
+            os.mkdir(basedir)
+        
+        # Create base_name directory
+        basedir = os.path.join(basedir, self.base_name.text())
+        if not os.path.isdir(basedir):
+            os.mkdir(basedir)
+        
+        # Save input pdb
         if self.input.currentText() != '':
-            parameters['files']['pdb'] = self.input.currentText()
+            for x in cmd.get_names("all"):
+                if x == self.input.currentText():
+                    pdb = os.path.join(os.path.join(basedir, f'{self.input.currentText()}.pdb'))
+                    cmd.save(pdb, self.input.currentText(), 0, "pdb")
         else:
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.critical(self, "Error", "Select an input PDB!")
             return False
-        # ligand
+        
+        # Save ligand pdb
         if self.ligand_adjustment.isChecked():
             if self.ligand.currentText() != '':
-                parameters['files']['ligand'] = self.ligand.currentText()
+                for x in cmd.get_names("all"):
+                    if x == self.ligand.currentText():
+                        ligand = os.path.join(os.path.join(basedir, f'{self.ligand.currentText()}.ligand.pdb'))
+                        cmd.save(ligand, self.ligand.currentText(), 0, "pdb")
             else:
                 from PyQt5.QtWidgets import QMessageBox
                 QMessageBox.critical(self, "Error", "Select an ligand PDB!")
                 return False
-        # output
-        parameters['files']['output'] = self.output_dir_path.text()
-        # base_name
-        parameters['files']['base_name'] = self.base_name.text()
+        else:
+            ligand = "-"
 
-        # modes
-        parameters['modes'] = dict()
-        # whole protein mode
-        parameters['modes']['whole_protein_mode'] = not self.box_adjustment.isChecked()
-        # box adjustment mode
-        parameters['modes']['box_mode'] = self.box_adjustment.isChecked()
-        # resolution_mode
-        parameters['modes']['resolution_mode'] = "Low"
-        # surface_mode
-        parameters['modes']['surface_mode'] = True
-        # kvp_mode
-        parameters['modes']['kvp_mode'] = False
-        # ligand_mode
-        parameters['modes']['ligand_mode'] = self.ligand_adjustment.isChecked()
+        with open("parameters.toml", 'w') as f:
+            f.write("# TOML configuration file for parKVFinder software.\n")
+            f.write("\ntitle = \"parKVFinder parameters file\"\n")
+            
+            f.write("\n[FILES_PATH]\n")
+            f.write("# The path of van der Waals radii dictionary for parKVFinder.\n")
+            f.write(f"dictionary = \"{self.dictionary.text()}\"\n")
+            f.write("# The path of the input PDB file.\n")
+            f.write(f"pdb = \"{pdb}\"\n")
+            f.write("# The path of the output directory.\n")
+            f.write(f"output = \"{self.output_dir_path.text()}\"\n")
+            f.write("# Base name for output files.\n")
+            f.write(f"base_name = \"{self.base_name.text()}\"\n")
+            f.write("# Path for the ligand's PDB file.\n")
+            f.write(f"ligand = \"{ligand}\"\n")
 
-        # step_size
-        parameters['step_size'] = dict()
-        parameters['step_size']['step_size'] = 0.0
+            f.write("\n[SETTINGS]\n")
+            f.write("# Settings for parKVFinder software.\n")
+            f.write("\n[SETTINGS.modes]\n")
+            f.write("# Whole protein mode defines the search space as the whole protein.\n")
+            f.write(f"whole_protein_mode = {'true' if not self.box_adjustment.isChecked() else 'false'}\n")
+            f.write("# Box adjustment mode defines the search space as the box drawn in PyMOL.\n")
+            f.write(f"box_mode = {'true' if self.box_adjustment.isChecked() else 'false'}\n")
+            f.write("# Resolution mode implicitly sets the step size (grid spacing) of the 3D grid.\n")
+            f.write("# If set to High, sets a voxel volume of 0.2. If set to Medium, sets a voxel volume of 0.1. If set to Low, it sets a voxel volume of 0.01. If set to Off, the step size must be set explicitly.\n")
+            f.write(f"resolution_mode = \"{self.resolution.currentText() if self.resolution_label.isChecked() else 'Off'}\"\n")
+            f.write("# Surface mode defines the type of surface representation to be applied, van der Waals molecular surface (true) or solvent accessible surface (false).\n")
+            f.write(f"surface_mode = {'true' if self.surface.currentText() == 'Molecular Surface (VdW)' else 'false'}\n")
+            f.write("# Cavity representation defines whether cavities are exported to the output PDB file as filled cavities (true) or filtered cavities (false).\n")
+            f.write(f"kvp_mode = {'true' if self.cavity_representation.currentText() == 'Full' else 'false'}\n")
+            f.write("# Ligand adjustment mode defines the search space around the ligand.\n")
+            f.write(f"ligand_mode = {'true' if self.ligand_adjustment.isChecked() else 'false'}\n")
 
-        # probes
-        parameters['probes'] = dict()
-        # probe_in
-        parameters['probes']['probe_in'] = self.probe_in.value()
-        # probe_out
-        parameters['probes']['probe_out'] = self.probe_out.value()
+            f.write("\n[SETTINGS.step_size]\n")
+            f.write("# Sets the 3D grid spacing. It directly affects accuracy and runtime.\n")
+            step = self.step_size.value() if self.step_size_label.isChecked() else 0.0
+            f.write(f"step_size = {step:.2f}\n")
+            
+            f.write("\n[SETTINGS.probes]\n")
+            f.write("# parKVFinder works with a dual probe system. A smaller probe, called Probe In, and a bigger one, called Probe Out, rolls around the protein.\n")
+            f.write("# Points reached by the Probe In, but not the Probe Out are considered cavity points.\n")
+            f.write("# Sets the Probe In diameter. Default: 1.4 angstroms.\n")
+            f.write(f"probe_in = {self.probe_in.value():.2f}\n")
+            f.write("# Sets the Probe Out diameter. Default: 4.0 angstroms.\n")
+            f.write(f"probe_out = {self.probe_out.value():.2f}\n")
 
-        # cutoffs
-        parameters['cutoffs'] = dict()
-        # volume_cutoff
-        parameters['cutoffs']['volume_cutoff'] = self.volume_cutoff.value()
-        # ligand_cutoff
-        parameters['cutoffs']['ligand_cutoff'] = self.ligand_cutoff.value()
-        # removal_distance
-        parameters['cutoffs']['removal_distance'] = self.removal_distance.value()
+            f.write("\n[SETTINGS.cutoffs]\n")
+            f.write("# Sets a volume cutoff for the detected cavities. Default: 5.0 angstroms.\n")
+            f.write(f"volume_cutoff = {self.volume_cutoff.value():.2f}\n")
+            f.write("# Sets a distance cutoff for a search space around the ligand in ligand adjustment mode. Default: 5.0 angstroms.\n")
+            f.write(f"ligand_cutoff = {self.ligand_cutoff.value():.2f}\n")
+            f.write("# Sets a removal distance for the cavity frontier, which is defined by comparing Probe In and Probe Out surfaces. Default: 2.4 angstroms.\n")
+            f.write(f"removal_distance = {self.removal_distance.value():.2f}\n")
+            
+            f.write("\n[SETTINGS.visiblebox]\n")
+            f.write("# Coordinates of the vertices that define the visible 3D grid. Only four points are required to define the search space.\n\n")
+            box = self.create_box_parameters()
+            d = {'SETTINGS': {'visiblebox': box}}
+            toml.dump(o=d, f=f)
 
-        # visiblebox
-        box = self.create_box_parameters()
-        parameters['visiblebox'] = dict()
-        parameters['visiblebox'].update(box)
+            f.write("\n[SETTINGS.internalbox]\n")
+            f.write("# Coordinates of the internal 3D grid. Used for calculations.\n\n")
+            box = self.create_box_parameters(is_internal_box=True)
+            d = {'SETTINGS': {'visiblebox': box}}
+            toml.dump(o=d, f=f)
 
-        # internalbox
-        box = self.create_box_parameters(is_internal_box=True)
-        parameters['internalbox'] = dict()
-        parameters['internalbox'].update(box)
-
-        return parameters
+        return True
 
 
     def create_box_parameters(self, is_internal_box=False) -> Dict[str, Dict[str, float]]:
@@ -1157,175 +1103,15 @@ class PyMOLKVFinderWebTools(QMainWindow):
         dialog = None
 
 
-    def _start_worker_thread(self) -> bool:
-        # Get KVFinder-web server status
-        server_status = _check_server_status(self.server)
-        
-        # Start Worker thread
-        self.thread = Worker(self.server, server_status)
-        self.thread.start()
-        
-        # Communication between GUI and Worker threads
-        self.thread.id_signal.connect(self.msg_results_not_available)
-        self.thread.server_down.connect(self.server_down)
-        self.thread.server_up.connect(self.server_up)
-        self.thread.server_status_signal.connect(self.set_server_status)
-        self.thread.available_jobs_signal.connect(self.set_available_jobs)
-        self.msgbox_signal.connect(self.thread.wait_status)
-        
-        return True
-
-
-    def add_id(self) -> None:
-        # Create Form
-        form = Form(self.server, self.output_dir_path.text())
-        reply = form.exec_()
-        
-        if reply:
-            # Get data from form 
-            self.data = form.get_data()
-
-            # Check job id
-            self._check_job_id(self.data)
-
-        return
-
-
-    def _check_job_id(self, data: Dict[str, Any]) -> None:
-        from PyQt5 import QtNetwork
-        from PyQt5.QtCore import QUrl
-
-        if verbosity in [1, 3]:
-            print(f"[==> Requesting Job ID ({data['id']}) to KVFinder-web server ...")
-
-        try:
-            # Prepare request
-            url = QUrl(f"{self.server}/{data['id']}")
-            request = QtNetwork.QNetworkRequest(url)
-            request.setHeader(QtNetwork.QNetworkRequest.ContentTypeHeader, "application/json")
-
-            # Get Request
-            self.reply = self.network_manager.get(request)
-            self.reply.finished.connect(self._handle_get_response)
-        except Exception as e:
-            print("Error occurred: ", e)
-
-
-    def _handle_get_response(self) -> None:
-        from PyQt5 import QtNetwork
-
-        # Get QNetwork error status
-        error = self.reply.error()
-
-        if error == QtNetwork.QNetworkReply.NoError:
-            # Read data retrived from server
-            reply = json.loads(str(self.reply.readAll(), 'utf-8'))
-
-            # Create parameters
-            parameters = {
-                'status': reply['status'],
-                'id_added_manually': True,
-                'files': self.data['files'],
-                'modes': None,
-                'step_size': None,
-                'probes': None,
-                'cutoffs': None,
-                'visiblebox':  None,
-                'internalbox': None
-            }
-            if parameters['files']['pdb'] is not None:
-                parameters['files']['pdb'] = os.path.basename(parameters['files']['pdb']).replace('.pdb', '')
-            if parameters['files']['ligand'] is not None:
-                parameters['files']['ligand'] = os.path.basename(parameters['files']['ligand']).replace('.pdb', '')
-
-            # Create job file
-            job = Job(parameters)
-            job.id = self.data['id']
-            job.id_added_manually = True
-            job.status = reply['status']
-            job.output = reply
-
-            # Save job
-            job.save(job.id)
-
-            # Message to user
-            if verbosity in [1, 3]:
-                print("> Job successfully added!")
-            message = Message("Job successfully added!", job.id, job.status)
-            message.exec_()
-
-            # Include job to available jobs
-            self.available_jobs.addItem(job.id)
-
-            # Export 
-            if job.status == 'completed':
-                try:
-                    job.export()
-                except Exception as e:
-                    print("Error occurred: ", e)
-
-        elif error == QtNetwork.QNetworkReply.ContentNotFoundError:
-            from PyQt5.QtWidgets import QMessageBox
-
-            # Message to user
-            if verbosity in [1, 3]:
-                print(f"> Job ID ({self.data['id']}) was not found in KVFinder-web server!")
-            message = QMessageBox.critical(
-                self, 
-                "Job Submission", 
-                f"Job ID ({self.data['id']}) was not found in KVFinder-web server!"
-                )
-        
-        elif error == QtNetwork.QNetworkReply.ConnectionRefusedError:
-            from PyQt5.QtWidgets import QMessageBox
-
-            # Message to user
-            if verbosity in [1, 3]:
-                print("> KVFinder-web server is Offline! Try again later!\n")
-            message = QMessageBox.critical(
-                self, 
-                "Job Submission", 
-                "KVFinder-web server is Offline!\n\nTry again later!"
-                )
-
-        # Clean data
-        self.data = None
-
-
-    def show_id(self) -> None:
-        # Get job ID
-        job_id = self.available_jobs.currentText()
-
-        # Message to user
-        print(f"> Displaying results from Job ID: {job_id}")
-        
-        # Get job path
-        job_fn = os.path.join(os.path.expanduser('~'), '.KVFinder-web', self.available_jobs.currentText(), 'job.toml')
-
-        # Get job information of ID
-        with open(job_fn, 'r') as f:
-            job_info = toml.load(f=f)
-
-        # Set results file
-        results_file = f"{job_info['files']['output']}/{job_id}/{job_info['files']['base_name']}.KVFinder.results.toml"
-        self.vis_results_file_entry.setText(results_file)
-
-        # Select Visualization tab
-        self.results_tabs.setCurrentIndex(1)
-
-        # Load results
-        self.load_results()
-
-
     def load_results(self) -> None:
         from pymol import cmd
 
         # Get results file
-        results_file = self.vis_results_file_entry.text()
+        results_file = self.results_file_entry.text()
         
         # Check if results file exist
         if os.path.exists(results_file) and results_file.endswith('KVFinder.results.toml'):
-            print(f"> Loading results from: {self.vis_results_file_entry.text()}")
+            print(f"> Loading results from: {self.results_file_entry.text()}")
         else:
             from PyQt5.QtWidgets import QMessageBox
             error_msg = QMessageBox.critical(self, "Error", "Results file cannot be opened! Check results file path.")
@@ -1381,26 +1167,6 @@ class PyMOLKVFinderWebTools(QMainWindow):
         return
 
 
-    def select_results_file(self) -> None:
-        """ 
-        Callback for the "Browse ..." button
-        Open a QFileDialog to select a directory.
-        """
-        from PyQt5.QtWidgets import QFileDialog
-        from PyQt5.QtCore import QUrl, QDir
-        
-        
-        # Get results file
-        fname, _ = QFileDialog.getOpenFileName(self, caption='Choose KVFinder Results File', directory=os.getcwd(), filter="KVFinder Results File (*.KVFinder.results.toml)")
-
-        if fname:
-            fname = QDir.toNativeSeparators(fname)
-            if os.path.exists(fname):
-                self.vis_results_file_entry.setText(fname)
-
-        return
-
-
     @staticmethod
     def load_cavity(fname, name) -> None:
         from pymol import cmd
@@ -1434,21 +1200,21 @@ class PyMOLKVFinderWebTools(QMainWindow):
     def refresh_information(self) -> None:
         # Input File
         if 'INPUT' in results['FILES_PATH'].keys():
-            self.vis_input_file_entry.setText(f"{results['FILES_PATH']['INPUT']}")
+            self.input_file_entry.setText(f"{results['FILES_PATH']['INPUT']}")
         else:
-            self.vis_input_file_entry.setText(f"")
+            self.input_file_entry.setText(f"")
 
         # Ligand File
         if 'LIGAND' in results['FILES_PATH'].keys():
-            self.vis_ligand_file_entry.setText(f"{results['FILES_PATH']['LIGAND']}")
+            self.ligand_file_entry.setText(f"{results['FILES_PATH']['LIGAND']}")
         else:
-            self.vis_ligand_file_entry.setText(f"")
+            self.ligand_file_entry.setText(f"")
         
         # Cavities File
-        self.vis_cavities_file_entry.setText(f"{results['FILES_PATH']['OUTPUT']}")
+        self.cavities_file_entry.setText(f"{results['FILES_PATH']['OUTPUT']}")
 
         # Step Size
-        self.vis_step_size_entry.setText(f"{results['PARAMETERS']['STEP_SIZE']:.2f}")
+        self.step_size_entry.setText(f"{results['PARAMETERS']['STEP_SIZE']:.2f}")
 
         return
 
@@ -1588,16 +1354,16 @@ class PyMOLKVFinderWebTools(QMainWindow):
 
     def clean_results(self) -> None:
         # Input File
-        self.vis_input_file_entry.setText(f"")
+        self.input_file_entry.setText(f"")
 
         # Ligand File
-        self.vis_ligand_file_entry.setText(f"")
+        self.ligand_file_entry.setText(f"")
         
         # Cavities File
-        self.vis_cavities_file_entry.setText(f"")
+        self.cavities_file_entry.setText(f"")
 
         # Step Size
-        self.vis_step_size_entry.setText(f"")
+        self.step_size_entry.setText(f"")
 
         # Volume
         self.volume_list.clear()
@@ -1607,937 +1373,6 @@ class PyMOLKVFinderWebTools(QMainWindow):
 
         # Residues
         self.residues_list.clear()
-
-
-    @pyqtSlot(bool)
-    def set_server_status(self, status) -> None:
-        if status:
-            self.server_up()
-        else:
-            self.server_down()
-
-
-    @pyqtSlot()
-    def server_up(self) -> None:
-        self.server_status.clear()
-        self.server_status.setText('Online')
-        self.server_status.setStyleSheet('color: green;')
-    
-
-    @pyqtSlot()
-    def server_down(self) -> None:
-        self.server_status.clear()
-        self.server_status.setText('Offline')
-        self.server_status.setStyleSheet('color: red;') 
-
-
-    @pyqtSlot(list)
-    def set_available_jobs(self, available_jobs) -> None:
-        # Get current selected job
-        current = self.available_jobs.currentText()
-        
-        # Update available jobs
-        self.available_jobs.clear()
-        self.available_jobs.addItems(available_jobs)
-
-        # If current still in available jobs, select it
-        if current in available_jobs:
-            self.available_jobs.setCurrentText(current)
-
-
-    def fill_job_information(self) -> None:
-        if self.available_jobs.currentText() != '': 
-            # Get job path
-            job_fn = os.path.join(os.path.expanduser('~'), '.KVFinder-web', self.available_jobs.currentText(), 'job.toml')
-            
-            # Read job file
-            with open(job_fn, 'r') as f:
-                job_info = toml.load(f=f)
-
-            # Fill job information labels
-            status = job_info['status'].capitalize()
-            if status == 'Queued' or status == 'Running':
-                self.job_status_entry.setText(status)
-                self.job_status_entry.setStyleSheet('color: blue;')
-                # Disable button
-                self.button_show_job.setEnabled(False)
-            elif status == 'Completed':
-                self.job_status_entry.setText(status)
-                self.job_status_entry.setStyleSheet('color: green;')
-                # Enable button
-                self.button_show_job.setEnabled(True)
-            # Input file
-            if 'pdb' in job_info['files'].keys():
-                self.job_input_entry.setText(f"{job_info['files']['pdb']}")
-            else:
-                self.job_input_entry.clear()
-            # Ligand file
-            if 'ligand' in job_info['files'].keys():
-                self.job_ligand_entry.setText(f"{job_info['files']['ligand']}")
-            else:
-                self.job_ligand_entry.clear()
-            # Output directory
-            self.job_output_dir_path_entry.setText(f"{job_info['files']['output']}")
-            # ID added manually
-            if 'id_added_manually' in job_info.keys():
-                if job_info['id_added_manually']:
-                    self.job_parameters_entry.setText(f"Not available")
-                    if 'pdb' not in job_info['files'].keys():
-                        self.job_input_entry.setText(f"Not available")
-                    if 'ligand' not in job_info['files'].keys():
-                        self.job_ligand_entry.setText(f"Not available")
-            else:
-                self.job_parameters_entry.setText(f"{job_info['files']['output']}/{self.available_jobs.currentText()}/{job_info['files']['base_name']}_parameters.toml")
-        else:
-            # Disable button
-            self.button_show_job.setEnabled(False)
-            # Fill job information labels
-            self.job_status_entry.clear()
-            self.job_input_entry.clear()
-            self.job_ligand_entry.clear()
-            self.job_output_dir_path_entry.clear()
-            self.job_parameters_entry.clear()
-
-
-    @pyqtSlot(str)
-    def msg_results_not_available(self, job_id) -> None:
-        from PyQt5.QtWidgets import QMessageBox
-
-        # Message to user
-        message = QMessageBox(self)
-        message.setWindowTitle(f"Job Notification")
-        message.setText(f'Job ID: {job_id}\nThis job is not available anymore in KVFinder-web server!\n')
-        message.setInformativeText(f"Jobs are kept for {days_job_expire} days after completion.")
-        if message.exec_() == QMessageBox.Ok:
-            # Send signal to Worker thread
-            self.msgbox_signal.emit(False)
-
-
-class Job(object):
-
-
-    def __init__(self, parameters: Optional[Dict[str, Any]]):
-        # Job Information (local)
-        self.status: Optional[str] = None
-        self.pdb: Optional[str] = None
-        self.ligand: Optional[str] = None
-        self.output_directory: Optional[str] = None
-        self.base_name: Optional[str] = None
-        self.id_added_manually: Optional[bool] = False
-        # Request information (server)
-        self.id: Optional[str] = None
-        self.input: Optional[Dict[str, Any]] = {} 
-        self.output: Optional[Dict[str, Any]] = None
-        # Upload parameters in self.input
-        self.upload(parameters)
-
-
-    @property
-    def cavity(self) -> Optional[Dict[str, Any]]:
-        if self.output == None:
-            return None
-        else:
-            return self.output["output"]["pdb_kv"]
-
-
-    @property
-    def report(self) -> Optional[Dict[str, Any]]:
-        if self.output == None: 
-            return None
-        else:
-            return self.output["output"]["report"]
-
-
-    @property
-    def log(self) -> Optional[Dict[str, Any]]:
-        if self.output == None:
-            return None
-        else:
-            return self.output["output"]["log"]
-
-
-    def _add_pdb(self, pdb_fn: str, is_ligand: bool=False) -> None:
-        with open(pdb_fn) as f:
-            pdb = f.readlines()
-        if is_ligand:
-            self.input["pdb_ligand"] = pdb
-        else:
-            self.input["pdb"] = pdb
-
-
-    def upload(self, parameters: Optional[Dict[str, Any]]) -> None:
-        """ Load Job from paramters Dict """
-        from pymol import cmd
-        
-        # Job Information (local)
-        # Status
-        self.status = parameters['status']
-        # ID Added Manually
-        if 'id_added_manually' in parameters.keys():
-            if parameters['id_added_manually']:
-                self.id_added_manually = parameters['id_added_manually']
-        # Output directory
-        self.output_directory = parameters['files']['output']
-        # Base_name
-        self.base_name = parameters['files']['base_name']
-        # Input PDB
-        if 'pdb' in parameters['files'].keys():
-            if parameters['files']['pdb'] is not None:
-                self.pdb = os.path.join(self.output_directory, parameters['files']['pdb'] + '.pdb')
-                cmd.save(self.pdb, parameters['files']['pdb'], 0,  'pdb')
-        # Ligand PDB
-        if 'ligand' in parameters['files'].keys():
-            if parameters['files']['ligand'] is not None:
-                self.ligand = os.path.join(self.output_directory, parameters['files']['ligand'] + '.pdb')
-                cmd.save(self.ligand, parameters['files']['ligand'], 0, "pdb")\
-        # Request information (server)
-        # Input PDB
-        if self.pdb:
-            self._add_pdb(self.pdb)
-        # Ligand PDB
-        if self.ligand:
-            self._add_pdb(self.ligand, is_ligand=True)
-        # Settings
-        self.input['settings'] = dict()
-        # Modes
-        self.input['settings']['modes'] = parameters['modes']
-        # Step size
-        self.input['settings']['step_size'] = parameters['step_size']
-        # Probes
-        self.input['settings']['probes'] = parameters['probes']
-        # Cutoffs
-        self.input['settings']['cutoffs'] = parameters['cutoffs']
-        # Visible box
-        self.input['settings']['visiblebox'] = parameters['visiblebox']
-        # Internal box
-        self.input['settings']['internalbox'] = parameters['internalbox']
-
-
-    def save(self, id: int) -> None:
-        """ Save Job to job.toml """
-        # Create job directory in ~/.KVFinder-web/
-        job_dn = os.path.join(os.path.expanduser('~'), '.KVFinder-web', str(id))
-        try:
-            os.mkdir(job_dn)
-        except FileExistsError:
-            pass
-
-        # Create job file inside ~/.KVFinder-web/id
-        job_fn = os.path.join(job_dn, 'job.toml')
-        with open(job_fn, 'w') as f:
-            f.write("# TOML configuration file for KVFinder-web job\n\n")
-            f.write("title = \"KVFinder-web job file\"\n\n")
-            f.write(f"status = \"{self.status}\"\n\n")
-            if self.id_added_manually:
-                f.write(f"id_added_manually = true\n\n")
-            f.write(f"[files]\n")
-            if self.pdb is not None: 
-                f.write(f"pdb = \"{self.pdb}\"\n")
-            if self.ligand is not None:
-                f.write(f"ligand = \"{self.ligand}\"\n")
-            f.write(f"output = \"{self.output_directory}\"\n")
-            f.write(f"base_name = \"{self.base_name}\"\n")
-            f.write('\n')
-            toml.dump(o=self.input['settings'], f=f)
-            f.write('\n')
-
-
-    @classmethod
-    def load(cls, fn: Optional[str]) -> Job:
-        """ Load Job from job.toml """
-        # Read job file
-        with open(fn, 'r') as f:
-            job_info = toml.load(f=f)
-        
-        # Fix pdb and ligand in job_info
-        if 'pdb' in job_info['files'].keys():
-            job_info['files']['pdb'] = os.path.basename(job_info['files']['pdb']).replace('.pdb', '')
-        if 'ligand' in job_info['files'].keys():
-            job_info['files']['ligand'] = os.path.basename(job_info['files']['ligand']).replace('.pdb', '')
-
-        # Treat manually added id
-        if 'id_added_manually' in job_info.keys():
-            if job_info['id_added_manually']:
-                job_info['modes'] = None
-                job_info['step_size'] = None
-                job_info['probes'] = None
-                job_info['cutoffs'] = None
-                job_info['visiblebox'] = None
-                job_info['internalbox'] = None
-
-        return cls(job_info)
-
-    
-    def export(self) -> None:
-        # Prepare base file
-        base_dir = os.path.join(self.output_directory, self.id)
-
-        try:
-            os.mkdir(base_dir)
-        except FileExistsError:
-            pass
-
-        # Export cavity
-        cavity_fn = os.path.join(base_dir, f'{self.base_name}.KVFinder.output.pdb')
-        with open(cavity_fn, 'w') as f:
-            f.write(self.cavity)
-
-        # Export report
-        report_fn = os.path.join(base_dir, f'{self.base_name}.KVFinder.results.toml')
-        report = toml.loads(self.report)
-        report['FILES_PATH']['INPUT'] = self.pdb
-        report['FILES_PATH']['LIGAND'] = self.ligand
-        report['FILES_PATH']['OUTPUT'] = cavity_fn
-        with open(report_fn, 'w') as f:
-            f.write('# TOML results file for parKVFinder software\n\n')
-            toml.dump(o=report, f=f)
-   
-        # Export log
-        log_fn = os.path.join(base_dir, 'KVFinder.log')
-        with open(log_fn, 'w') as f:
-            for line in self.log.split('\n'):
-                if 'Running parKVFinder for: ' in line:
-                    line = f'Running parKVFinder for job ID: {self.id}'
-                    f.write(f'{line}\n')
-                elif 'Dictionary: ' in line:
-                    pass
-                else:
-                    f.write(f'{line}\n')
-
-        # Export parameters
-        if not self.id_added_manually:
-            parameter_fn = os.path.join(self.output_directory, self.id, f'{self.base_name}_parameters.toml')
-            with open(parameter_fn, 'w') as f:
-                f.write("# TOML configuration file for KVFinder-web job.\n\n")
-                f.write("title = \"KVFinder-web parameters file\"\n\n")
-                f.write(f"[files]\n")
-                f.write("# The path of the input PDB file.\n")
-                f.write(f"pdb = \"{self.pdb}\"\n")
-                f.write("# The path for the ligand's PDB file.\n")
-                if self.ligand is not None:
-                    f.write(f"ligand = \"{self.ligand}\"\n")
-                else:
-                    f.write(f"ligand = \"-\"\n")
-                f.write('\n')
-                f.write(f"[settings]\n")
-                f.write(f"# Settings for cavity detection.\n\n")
-                settings = {'settings': self.input['settings']}
-                toml.dump(o=settings, f=f)
-                f.write('\n')
-
-
-class Worker(QThread):
-
-    # Signals
-    id_signal = pyqtSignal(str)
-    server_down = pyqtSignal()
-    server_up = pyqtSignal()
-    server_status_signal = pyqtSignal(bool)
-    available_jobs_signal = pyqtSignal(list)
-
-
-    def __init__(self, server, server_status):
-        super().__init__()
-        self.server = server
-        self.wait = False
-        self.server_status = server_status
-
-
-    def run(self) -> None:
-        from PyQt5.QtCore import QTimer, QEventLoop
-        
-        # Times completed jobs with results are not checked in KVFinder-web server
-        counter = 0
-
-        while True:
-            
-            # Loop to wait QMessageBox signal from GUI thread that delete jobs that are no long available in KVFinder-web server
-            while self.wait:
-                # Wait timer to check wait status
-                loop = QEventLoop()
-                QTimer.singleShot(time_wait_status, loop.quit)
-                loop.exec_()
-               
-            # Constantly getting available jobs
-            jobs = _get_jobs()
-            self.available_jobs_signal.emit(jobs)
-            
-            # Message to user
-            if verbosity in [2, 3]:
-                print(f"\n[==> Currently available jobs are: {jobs}")
-
-            # Jobs available to check status and server up
-            if jobs and self.server_status:
-                
-                # Flag to indicate that there is at least one job completed with downloaded results in this loop
-                flag = False
-                
-                # Check all job ids
-                for job_id in jobs:
-                    # Message to user
-                    if verbosity in [2, 3]:
-                        print(f"> Checking Job ID: {job_id}")
-
-                    # Get job information 
-                    job_fn = os.path.join(os.path.expanduser('~'), '.KVFinder-web', job_id, 'job.toml')
-                    self.job_info = Job.load(fn=job_fn)
-                    self.job_info.id = job_id
-
-                    # Save current status
-                    status = self.job_info.status
-
-                    # Handle job status
-                    if status == 'queued' or status == 'running':
-                        # Get request for job results
-                        self._get_results(job_id)
-
-                    elif status == 'completed':
-                        # Check if results files exist
-                        output_exists = self._check_output_exists()
-
-                        if not output_exists:
-                            self._get_results(job_id)
-                        else:
-                            # If completed jobs with results reaches times_job_completed_no_checked counter (10), try to get job results
-                            if counter == times_job_completed_no_checked:
-                                self._get_results(job_id)
-                                counter = 0
-                            
-                            # Indicate that there is at least one job completed with downloaded
-                            flag = True
-
-                    # Wait timer to check next available job
-                    if len(jobs) > 1:
-                        loop = QEventLoop()
-                        QTimer.singleShot(time_between_jobs, loop.quit)
-                        loop.exec_()
-                
-                # If at least one job completed with downloaded results, increment counter
-                if flag:
-                    counter += 1
-                    flag = False
-
-                # Wait timer to restart available job checks
-                loop = QEventLoop()
-                QTimer.singleShot(time_restart_job_checks, loop.quit)
-                loop.exec_()  
-            
-            # No jobs available to check status
-            else:
-                # Message to user
-                if verbosity in [2, 3]:
-                    print('> Checking KVFinder-web server status ...')
-                
-                # Check server status
-                while not ( status := _check_server_status(self.server) ):
-                    if verbosity in [2, 3]:
-                        print("\n\033[93mWarning:\033[0m KVFinder-web server is Offline!\n")
-                    # Send signal that server is down
-                    self.server_status_signal.emit(status)
-                    
-                    # Wait timer to repeat server status check
-                    loop = QEventLoop()
-                    QTimer.singleShot(time_server_down, loop.quit)
-                    loop.exec_()
-
-                    # Message to user
-                    if verbosity in [2, 3]:
-                        print('> Checking KVFinder-web server status ...')
-
-                # Update server_status value
-                self.server_status = status
-                # Send signal that server is up
-                self.server_status_signal.emit(self.server_status)
-            
-                # Wait timer when no jobs are being checked 
-                loop = QEventLoop()
-                QTimer.singleShot(time_no_jobs, loop.quit)
-                loop.exec_()             
-
-    
-    def _get_results(self, job_id) -> None:
-        from PyQt5 import QtNetwork
-        from PyQt5.QtCore import QUrl, QTimer, QEventLoop
-
-        try:
-            self.network_manager = QtNetwork.QNetworkAccessManager()
-
-            # Prepare request
-            url = QUrl(f'{self.server}/{job_id}')
-            request = QtNetwork.QNetworkRequest(url)
-            request.setHeader(QtNetwork.QNetworkRequest.ContentTypeHeader, "application/json")
-
-            # Get Request
-            self.reply = self.network_manager.get(request)
-            self.reply.finished.connect(self._handle_get_response)
-        except Exception as e:
-            print("Error occurred: ", e)
-    
-
-    def _handle_get_response(self) -> None:
-        from PyQt5 import QtNetwork
-        
-        # Get QNetwork error status
-        error = self.reply.error()
-
-        if error == QtNetwork.QNetworkReply.NoError:
-            
-            # Read data retrived from server
-            reply = json.loads(str(self.reply.readAll(), 'utf-8'))
-            
-            # Pass outputs to Job class
-            self.job_info.output = reply
-            self.job_info.status = reply['status']
-            self.job_info.save(self.job_info.id)
-
-            # Export results
-            try:
-                self.job_info.export()
-            except Exception as e:
-                print("Error occurred: ", e)
-
-            # Send Server Up Signal to GUI Thread
-            self.server_up.emit()  
-
-        elif error == QtNetwork.QNetworkReply.ContentNotFoundError:
-            
-            # Send Server Up Signal to GUI Thread
-            self.server_up.emit()  
-            
-            # Send Job Id to GUI Thread
-            self.wait = True
-            self.id_signal.emit(self.job_info.id)
-
-            # Remove job id from .KVFinder-web
-            job_dn = os.path.join(os.path.expanduser('~'), '.KVFinder-web', self.job_info.id)
-            try:
-                self.erase_job_dir(job_dn)
-                self.available_jobs_signal.emit(_get_jobs())
-            except Exception as e:
-                print("Error occurred: ", e)
-
-        elif error == QtNetwork.QNetworkReply.ConnectionRefusedError:
-            
-            # Message to user
-            if verbosity in [2, 3]:
-                print("\n\033[93mWarning:\033[0m KVFinder-web server is Offline!\n")
-            
-            # Send Server Down Signal to GUI Thread 
-            self.server_down.emit()
-
-
-    def _check_output_exists(self) -> bool:
-        # Prepare base file
-        base_dir = os.path.join(self.job_info.output_directory, self.job_info.id)
-        
-        # Get output files paths
-        log = os.path.join(base_dir, 'KVFinder.log')
-        report = os.path.join(base_dir, f'{self.job_info.base_name}.KVFinder.results.toml')
-        cavity = os.path.join(base_dir, f'{self.job_info.base_name}.KVFinder.output.pdb')
-        if not self.job_info.id_added_manually:
-            parameters = os.path.join(base_dir, f'{self.job_info.base_name}_parameters.toml')
-        else:
-            parameters = True
-
-        # Check if files exist
-        log_exist = os.path.exists(log)
-        report_exist = os.path.exists(report)
-        cavity_exist = os.path.exists(cavity)
-        parameters_exist = os.path.exists(parameters)
-
-        return log_exist and report_exist and cavity_exist and parameters
-
-
-    @pyqtSlot(bool)
-    def wait_status(self, status) -> None:
-        self.wait = status
-
-
-    @staticmethod
-    def erase_job_dir(d) -> None:
-        for f in os.listdir(d):
-            f = os.path.join(d, f)
-            if os.path.isdir(f):
-                self.erase_job_dir(f)
-            else:
-                os.remove(f)
-        os.rmdir(d)
-
-
-class Form(QDialog):
-
-
-    def __init__(self, server, output_dir):
-        super(Form, self).__init__()      
-        # Initialize PyMOLKVFinderWebTools GUI
-        self.initialize_gui(output_dir)
-
-        # Define server
-        self.server = server
-
-
-    def initialize_gui(self, output_dir) -> None:
-        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSpacerItem, QSizePolicy, QDialogButtonBox, QStyle
-        from PyQt5.QtCore import Qt
-        
-        # Set Window Title
-        self.setWindowTitle('Job ID Form')
-
-        # Set alignment of QDialog
-        self.verticalLayout = QVBoxLayout(self)
-        self.resize(800, 220)
-        self.setFixedHeight(220)
-
-        # Create header label
-        self.header = QLabel(self)
-        self.header.setText("Fill the fields and click on \'Add\' button:")
-        self.header.setAlignment(Qt.AlignCenter)
-
-        # Create Job ID layout
-        self.hframe1 = QHBoxLayout()
-        self.job_id_label = QLabel(self)
-        self.job_id_label.setText("Job ID:")
-        self.job_id = QLineEdit(self)
-        self.hframe1.addWidget(self.job_id_label)
-        self.hframe1.addWidget(self.job_id)
-
-        # Create Output Base Name layout
-        self.hframe2 = QHBoxLayout()
-        self.base_name_label = QLabel(self)
-        self.base_name_label.setText("Output Base Name:")
-        self.base_name = QLineEdit(self)
-        self.base_name.setText("output")
-        self.base_name.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        self.hspacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.hframe2.addWidget(self.base_name_label)
-        self.hframe2.addWidget(self.base_name)
-        self.hframe2.addItem(self.hspacer)
-
-        # Create Output Directory layout
-        self.hframe3 = QHBoxLayout()
-        self.output_dir_label = QLabel(self)
-        self.output_dir_label.setText("Output Directory:")
-        self.output_dir = QLineEdit(self)
-        self.output_dir.setReadOnly(True)
-        self.output_dir.setText(output_dir)
-        self.button_browse_output_dir = QPushButton(self)
-        self.button_browse_output_dir.setText("Browse ...")
-        self.hframe3.addWidget(self.output_dir_label)
-        self.hframe3.addWidget(self.output_dir)
-        self.hframe3.addWidget(self.button_browse_output_dir)
-
-        # Create Input file layout
-        self.hframe4 = QHBoxLayout()
-        self.input_file_label = QLabel(self)
-        self.input_file_label.setText("Input File (optional):")
-        self.input_file = QLineEdit(self)
-        self.input_file.setReadOnly(True)
-        self.button_browse_input_file = QPushButton(self)
-        self.button_browse_input_file.setText("Browse ...")
-        self.hframe4.addWidget(self.input_file_label)
-        self.hframe4.addWidget(self.input_file)
-        self.hframe4.addWidget(self.button_browse_input_file)         
-
-        # Create Ligand file layout
-        self.hframe5 = QHBoxLayout()
-        self.ligand_file_label = QLabel(self)
-        self.ligand_file_label.setText("Ligand File (optional):")
-        self.ligand_file = QLineEdit(self)
-        self.ligand_file.setReadOnly(True)
-        self.button_browse_ligand_file = QPushButton(self)
-        self.button_browse_ligand_file.setText("Browse ...")
-        self.hframe5.addWidget(self.ligand_file_label)
-        self.hframe5.addWidget(self.ligand_file)
-        self.hframe5.addWidget(self.button_browse_ligand_file)    
-
-        # Create Vertical Spacer
-        self.vspacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        # Create Dialog Button Box
-        self.buttons = QDialogButtonBox(self)
-        ok = QPushButton("&Add")
-        ok.setIcon(self.style().standardIcon(QStyle.SP_DialogOkButton))
-        self.buttons.addButton(ok, QDialogButtonBox.AcceptRole)
-        self.buttons.addButton(QDialogButtonBox.Cancel)
-        self.buttons.setCenterButtons(True)
-
-        # Add Widgets to layout
-        self.verticalLayout.addWidget(self.header)
-        self.verticalLayout.addLayout(self.hframe1)
-        self.verticalLayout.addLayout(self.hframe2)
-        self.verticalLayout.addLayout(self.hframe3)
-        self.verticalLayout.addLayout(self.hframe4)
-        self.verticalLayout.addLayout(self.hframe5)
-        self.verticalLayout.addItem(self.vspacer)
-        self.verticalLayout.addWidget(self.buttons)
-
-        ########################
-        ### Buttons Callback ###
-        ########################
-
-        # hook up QDialog buttons callbacks
-        self.button_browse_output_dir.clicked.connect(self.select_directory)
-        self.button_browse_input_file.clicked.connect(lambda: self.select_file(self.input_file, "Choose Input PDB File"))
-        self.button_browse_ligand_file.clicked.connect(lambda: self.select_file(self.ligand_file, "Choose Ligand PDB File"))
-        self.buttons.accepted.connect(self.add_job_id)
-        self.buttons.rejected.connect(self.close)
-
-
-    def add_job_id(self) -> Optional[int]:
-        # Handle button click by user
-        # Ok
-        if self.job_id.text() and os.path.isdir(self.output_dir.text()) and self.base_name.text():
-            return self.accept()
-        # Cancel
-        else:
-            from PyQt5.QtWidgets import QMessageBox
-            # Message to user
-            if verbosity in [2, 3]:
-                print("Fill required fields: Job ID, Output Base Name and/or Output Directory.")
-            message = QMessageBox.critical(
-                self,
-                "Job Submission",
-                "Fill required fields: Job ID, Output Base Name and Output Directory."
-                )
-            return None
-    
-    
-    def get_data(self) -> Dict[str, Any]:
-        # Prepara data from Form in Dict
-        data = {
-            'id': self.job_id.text(),
-            'files': {
-                'base_name': self.base_name.text(),
-                'output': self.output_dir.text(),
-                'pdb': self.input_file.text() if self.input_file.text() != '' else None,
-                'ligand': self.ligand_file.text() if self.ligand_file.text() != '' else None
-                }
-            }
-        return data
-
-    
-    def select_directory(self) -> None:
-        """ 
-        Callback for the "Browse ..." button
-        Open a QFileDialog to select a directory.
-        """
-        from PyQt5.QtWidgets import QFileDialog
-        from PyQt5.QtCore import QDir
-        
-        fname = QFileDialog.getExistingDirectory(caption='Choose Output Directory', directory=os.getcwd())
-
-        if fname:
-            fname = QDir.toNativeSeparators(fname)
-            if os.path.isdir(fname):
-                self.output_dir.setText(fname)
-
-        return
-
-
-    def select_file(self, entry: QLineEdit, caption: str) -> None:
-        """ 
-        Callback for the "Browse ..." button
-        Open a QFileDialog to select a directory.
-        """
-        from PyQt5.QtWidgets import QFileDialog
-        from PyQt5.QtCore import QDir
-        
-        
-        # Get results file
-        fname, _ = QFileDialog.getOpenFileName(self, caption=caption, directory=os.getcwd(), filter="PDB file (*.pdb)")
-
-        if fname:
-            fname = QDir.toNativeSeparators(fname)
-            if os.path.exists(fname):
-                entry.setText(fname)
-        else:
-            entry.clear()
-
-        return
-
-
-class Message(QDialog):
-
-
-    def __init__(self, msg: str, job_id: str, status: Optional[str]=None):
-        super(Message, self).__init__()
-        # Initialize Message GUI
-        self.initialize_gui(msg, job_id, status)
-
-        # Set Values in Message GUI
-        self.set_values(msg, job_id, status)
-
-
-    def set_values(self, msg, job_id, status) -> None:
-        # Message
-        self.msg.setText(msg)
-
-        # Job ID
-        self.job_id.setText(job_id)
-
-        # Status
-        if status:
-            self.status.setText(status.capitalize())
-            if status == 'queued' or status == 'running':
-                self.status.setStyleSheet('color: blue;')
-            elif status == 'completed':
-                self.status.setStyleSheet('color: green;')
-
-
-    def initialize_gui(self, msg, job_id, status) -> None:
-        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QSpacerItem, QSizePolicy, QDialogButtonBox, QStyle
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtGui import QFont, QIcon
-        
-        # Set Window Title
-        self.setWindowTitle('Job Submission')
-
-        # Set alignment of QDialog
-        self.vframe = QVBoxLayout(self)
-        self.setFixedSize(425, 150)
-
-        # Create message layout
-        self.hframe1 = QHBoxLayout()
-        # Icon
-        self.icon = QLabel(self)
-        pixmap = self.style().standardIcon(QStyle.SP_MessageBoxInformation).pixmap(30, 30, QIcon.Active, QIcon.On)
-        self.icon.setPixmap(pixmap)
-        self.icon.setAlignment(Qt.AlignCenter)
-        self.icon.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
-        # Message
-        self.msg = QLabel(self)
-        self.msg.setAlignment(Qt.AlignCenter)
-        # add to layout
-        self.hframe1.addWidget(self.icon)
-        self.hframe1.addWidget(self.msg)
-
-        # Vertical spacer
-        self.vspacer1 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        # Create Job ID layout
-        self.hframe2 = QHBoxLayout()
-        # Job ID label
-        self.job_id_label = QLabel(self)
-        self.job_id_label.setText("Job ID:")
-        self.job_id_label.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred))
-        self.job_id_label.setAlignment(Qt.AlignCenter)
-        # Job ID entry
-        self.job_id = QLineEdit(self)
-        sizePolicy1 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        self.job_id.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
-        self.job_id.setReadOnly(True)
-        self.job_id.setFixedWidth(200)
-        # add to layout
-        self.hframe2.addWidget(self.job_id_label)
-        self.hframe2.addWidget(self.job_id)
-        self.hframe2.setAlignment(Qt.AlignCenter)
-
-        # Create Status layout
-        self.hframe3 = QHBoxLayout()
-        if status:
-            # Job ID label
-            self.status_label = QLabel(self)
-            self.status_label.setText("Status:")
-            self.status_label.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred))
-            self.status_label.setAlignment(Qt.AlignCenter)
-            # Job ID entry
-            self.status = QLineEdit(self)
-            self.status.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
-            self.status.setReadOnly(True)
-            font = QFont()
-            font.setBold(True)
-            self.status.setFont(font)
-            self.status.setFixedWidth(90)
-            self.status.setAlignment(Qt.AlignCenter)
-            # add to layout
-            self.hframe3.addWidget(self.status_label)
-            self.hframe3.addWidget(self.status)
-            self.hframe3.setAlignment(Qt.AlignCenter)
-
-        # Vertical spacer
-        self.vspacer2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        # Create Dialog Button Box
-        self.buttonBox = QDialogButtonBox(self)
-        self.buttonBox.setOrientation(Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Ok)
-        self.buttonBox.setCenterButtons(True)
-
-        # Add Widgets to layout
-        self.vframe.addLayout(self.hframe1)
-        self.vframe.addItem(self.vspacer1)
-        self.vframe.addLayout(self.hframe2)
-        self.vframe.addLayout(self.hframe3)
-        self.vframe.addItem(self.vspacer2)
-        self.vframe.addWidget(self.buttonBox)
-
-        ########################
-        ### Buttons Callback ###
-        ########################
-
-        # hook up QDialog buttons callbacks
-        self.buttonBox.accepted.connect(self.accept)
-
-
-def _check_server_status(server) -> bool:
-    import urllib.request
-    try:
-        urllib.request.urlopen(server, timeout=1).getcode()
-        return True
-    except:
-        return False
-
-
-def _get_jobs() -> list:
-    # Get job dir
-    d = os.path.join(os.path.expanduser('~'), '.KVFinder-web/')
-    
-    # Get jobs availables in dir
-    jobs = os.listdir(d)
-
-    return jobs
-
-
-about_text = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-<html><head><meta name="qrichtext" content="1" /><style type="text/css"></style></head><body style=" font-family:'Sans Serif'; font-size:10pt; font-weight:400; font-style:normal;">
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">PyMOL KVFinder-web Tools integrates PyMOL (<a href="http://PyMOL.org/"><span style=" text-decoration: underline; color:#0000ff;">http://PyMOL.org/</span></a>) with KVFinder-web server.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">In the simplest case of running a job on KVFinder-web server:</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">1) Load a target biomolecular structure into PyMOL.</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">2) Start PyMOL KVFinder-web Tools plugin.</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">3) Select an input PDB on 'Main' tab.</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">4) Click on the 'Run KVFinder-web' button.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Jobs sent to KVFinder-server are automatically checked by a worker thread when the plugin is activated, which downloads the results upon job completion. Further, jobs are available on the server up to {} day{} after completion.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Job IDs are available on 'Results' tab under 'Jobs' tab, where users can check their status and input file, ligand file, output directory and parameters file locations. In addition, after the job is complete, the results can be visualiazed by clicking on 'Show' button with a job ID selected. Also, the results can be loaded directly from a results file (<span style=" font-style:italic;">.KVFinder.results.toml</span>) on the 'Results Visualization' tab. Furthermore, users can also add job IDs to PyMOL KVFinder-web Tools by clicking on 'Add ID' and providing a valid job ID to the form.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">In addition to whole structure cavity detection, there are two search space adjustments: Box and Ligand adjustments.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">The 'Box adjustment' mode creates a custom search box around a selection of interest by clicking on 'Draw Box' button, which can be adapted by changing one box parameter (minimum and maximum XYZ, padding and angles) at a time by clicking on 'Redraw Box'. For more information, there is a help button in 'Box adjustment' group.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">The 'Ligand adjustment' keeps cavity points around a target ligand PDB within a radius defined by the 'Ligand Cutoff' parameter.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">parKVFinder, KVFinder-web server and PyMOL KVFinder-web Tools was developed by:</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">- João Victor da Silva Guerra</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">- Helder Veras Filho</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">- Leandro Oliveira Bortot</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">- Rodrigo Vargas Honorato</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">- José Geraldo de Carvalho Pereira</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">- Paulo Sergio Lopes de Oliveira (paulo.oliveira@lnbio.cnpem.br)</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Brazilian Center for Research in Energy and Materials - CNPEM</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Brazilian Biosciences National Laboratory - LNBio</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Please refer and cite the parKVFinder paper if you use it in a publication.</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Citation:</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">&lt;paper&gt;</p>
-<p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Citation for PyMOL 2 may be found here:</p>
-<p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><a href="http://pymol.sourceforge.net/faq.html#CITE"><span style=" text-decoration: underline; color:#0000ff;">https://pymol.org/2/support.html?</span></a></p></body></html>
-""".format(days_job_expire, 's' if days_job_expire > 1 else '')
 
 
 def KVFinderWebTools() -> None:
