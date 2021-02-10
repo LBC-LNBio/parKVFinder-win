@@ -193,7 +193,11 @@ class PyMOLKVFinderWebTools(QMainWindow):
 
         # hook up Refresh buttons callback
         self.refresh_input.clicked.connect(lambda: self.refresh(self.input))
-        
+
+        # hook up resolution-step CheckBox callbacks
+        self.resolution_label.clicked.connect(self.check_resolution)
+        self.step_size_label.clicked.connect(self.check_step_size)
+
         # hook up Search Space button callbacks
         # Box Adjustment
         self.button_draw_box.clicked.connect(self.set_box)
@@ -212,6 +216,36 @@ class PyMOLKVFinderWebTools(QMainWindow):
         # FIXME: remove me
         from pymol import cmd
         cmd.load("~/remote-repos/parKVFinder/input/1FMO.pdb", "1FMO")
+
+
+    def check_resolution(self):
+        if self.resolution_label.isChecked():
+            self.resolution.setEnabled(True)
+            self.resolution.setCurrentText(self._default.resolution)
+            self.step_size_label.setChecked(False)
+            self.step_size.setEnabled(False)
+            self.step_size.setValue(self._default.step)
+        else:
+            self.resolution.setEnabled(False)
+            self.resolution.setCurrentText("Off")
+            self.step_size_label.setChecked(True)
+            self.step_size.setEnabled(True)
+            self.step_size.setValue(0.6)
+
+
+    def check_step_size(self):
+        if self.step_size_label.isChecked():
+            self.resolution_label.setChecked(False)
+            self.resolution.setEnabled(False)
+            self.resolution.setCurrentText("Off")
+            self.step_size.setEnabled(True)
+            self.step_size.setValue(0.6)
+        else:
+            self.resolution_label.setChecked(True)
+            self.resolution.setEnabled(True)
+            self.resolution.setCurrentText(self._default.resolution)
+            self.step_size.setEnabled(False)
+            self.step_size.setValue(self._default.step)
 
 
     def get_KVFinder_PATH(self) -> str:
