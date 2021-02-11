@@ -19,7 +19,7 @@ setx KVFinder_PATH C:\path\to\your\parKVFinder-win-x.x
 
 or, open **Control Panel** > **System** > **Advanced system settings** > **Advanced** tab > **Enviroment Variables...** button > **User variables for \<user\>** panel > **New...** button. On the **Edit System Variable** windows, set `KVFinder_PATH` on **Variable name** and `C:\path\to\your\parKVFinder-win-x.x` on **Variable value**.
 
-# PyMOL Plug-in Installation (`PyMOL2 parKVFinder Tools`)
+# PyMOL Plug-in Installation
 
 First, you need to install PyMOL v2.x on your computer. If you do not have it installed, please refer to PyMOL [website](https://pymol.org/2/).
 
