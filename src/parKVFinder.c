@@ -100,7 +100,7 @@ main (int argc,
 		kvp_mode = parameters->kvp_mode;
 		ligand_mode = parameters->ligand_mode;
 
-        /* Free struct TOML */
+    /* Free struct TOML */
 		free (param);
 		free (parameters);
 	}
@@ -136,27 +136,8 @@ main (int argc,
 
 	/* Preparing files paths */
 	/* Windows */
-  convert_path_windows(OUTPUT);
-  output = combine(OUTPUT, "KV_Files\\\\");
-	// if (OUTPUT[strlen (OUTPUT) - 1] == '\\') {
-	// 	if (OUTPUT[strlen (OUTPUT) - 2] == '\\') {
-	// 		if (OUTPUT[strlen (OUTPUT - 3)] == '\\') {
-	// 			OUTPUT[strlen (OUTPUT) - 1] = '\0';
-	// 		}
-	// 		output = combine(OUTPUT, "KV_Files\\\\");
-	// 	}
-	// 	else {
-	// 	output =  combine(OUTPUT, "\\KV_Files\\\\");
-	// 	}
-	// }
-	// else {
-	// 	if (OUTPUT[0] == '\0')
-	// 		output = combine(OUTPUT, "KV_Files\\\\");
-	// 	else
-	// 		output = combine(OUTPUT, "\\\\KV_Files\\\\");
-	// }
-
-	_fullpath(pdb_name, PDB_NAME, 500); /* Windows */
+  output = combine(OUTPUT, "\\KV_Files\\");
+	_fullpath(pdb_name, PDB_NAME, 500);
 
 	/* Create KV_Files folder */
 	mkdir (output); /* Windows */
@@ -169,7 +150,7 @@ main (int argc,
 	/* Create BASE_NAME folder for the running analysis */
 	output = combine (output, BASE_NAME); /* Include BASE_NAME folder in KV_Files */
 	mkdir (output); /* Windows */
-	output_folder = combine (output, "\\\\"); /* Include bar after appending BASE_NAME */ /* Windows */
+	output_folder = combine (output, "\\"); /* Include bar after appending BASE_NAME */ /* Windows */
 	output = combine (output_folder, BASE_NAME); /* Include BASE_NAME to output path in BASE_NAME folder */
 
 	/* Create output PDB and results file names */

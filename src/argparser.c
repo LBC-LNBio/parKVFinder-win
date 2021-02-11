@@ -208,8 +208,8 @@ print_toml (char *toml_name,
 		convert_path_windows(LIGAND_NAME); /* Windows */
 	convert_path_windows(dictionary_name); /* Windows */
 
-    /* Create KV_Files directory */
-    mkdir(combine(OUTPUT, "KV_Files\\\\")); /* Windows */
+  /* Create KV_Files directory */
+  mkdir(combine(OUTPUT, "\\KV_Files\\")); /* Windows */
 
     /* Open TOML file */
 	toml_file = fopen (toml_name, "w");
@@ -846,40 +846,41 @@ argparser (int argc,
 			/* Read parameters TOML files */
 			toml *parameters = readTOML (param, parameters_name); /*Read TOML file inside struct TOML*/
 
-			/* Save TOML parameters from struct TOML parameters to KVFinder variables */
-            *X1 = parameters->X1; *Y1 = parameters->Y1; *Z1 = parameters->Z1;
-		    *X2 = parameters->X2; *Y2 = parameters->Y2; *Z2 = parameters->Z2;
-		    *X3 = parameters->X3; *Y3 = parameters->Y3; *Z3 = parameters->Z3;
-		    *X4 = parameters->X4; *Y4 = parameters->Y4; *Z4 = parameters->Z4;
-		    *bX1 = parameters->bX1; *bY1 = parameters->bY1; *bZ1 = parameters->bZ1;
-		    *bX2 = parameters->bX2; *bY2 = parameters->bY2; *bZ2 = parameters->bZ2;
-		    *bX3 = parameters->bX3; *bY3 = parameters->bY3; *bZ3 = parameters->bZ3;
-		    *bX4 = parameters->bX4; *bY4 = parameters->bY4; *bZ4 = parameters->bZ4;
-            strcpy(PDB_NAME, parameters->PDB_NAME);
-			strcpy(OUTPUT, parameters->OUTPUT);
-			strcpy(BASE_NAME, parameters->BASE_NAME);
-			strcpy(LIGAND_NAME, parameters->LIGAND_NAME);
-			strcpy(dictionary_name, parameters->dictionary_name);
-			strcpy(resolution_flag, parameters->resolution_flag);
-			*volume_cutoff = parameters->volume_cutoff;
-			*ligand_cutoff = parameters->ligand_cutoff;
-			*removal_distance = parameters->removal_distance;
-			*probe_in = parameters->probe_in;
-			*probe_out = parameters->probe_out;
-			*h = parameters->h;
-			*whole_protein_mode = parameters->whole_protein_mode;
-			*box_mode = parameters->box_mode;
-			*surface_mode = parameters->surface_mode;
-			*kvp_mode = parameters->kvp_mode;
-			*ligand_mode = parameters->ligand_mode;
+      /* Save TOML parameters from struct TOML parameters to KVFinder variables */
+      *X1 = parameters->X1; *Y1 = parameters->Y1; *Z1 = parameters->Z1;
+      *X2 = parameters->X2; *Y2 = parameters->Y2; *Z2 = parameters->Z2;
+      *X3 = parameters->X3; *Y3 = parameters->Y3; *Z3 = parameters->Z3;
+      *X4 = parameters->X4; *Y4 = parameters->Y4; *Z4 = parameters->Z4;
+      *bX1 = parameters->bX1; *bY1 = parameters->bY1; *bZ1 = parameters->bZ1;
+      *bX2 = parameters->bX2; *bY2 = parameters->bY2; *bZ2 = parameters->bZ2;
+      *bX3 = parameters->bX3; *bY3 = parameters->bY3; *bZ3 = parameters->bZ3;
+      *bX4 = parameters->bX4; *bY4 = parameters->bY4; *bZ4 = parameters->bZ4;
+      strcpy(PDB_NAME, parameters->PDB_NAME);
+      strcpy(OUTPUT, parameters->OUTPUT);
+      strcpy(BASE_NAME, parameters->BASE_NAME);
+      strcpy(LIGAND_NAME, parameters->LIGAND_NAME);
+      strcpy(dictionary_name, parameters->dictionary_name);
+      strcpy(resolution_flag, parameters->resolution_flag);
+      *volume_cutoff = parameters->volume_cutoff;
+      *ligand_cutoff = parameters->ligand_cutoff;
+      *removal_distance = parameters->removal_distance;
+      *probe_in = parameters->probe_in;
+      *probe_out = parameters->probe_out;
+      *h = parameters->h;
+      *whole_protein_mode = parameters->whole_protein_mode;
+      *box_mode = parameters->box_mode;
+      *surface_mode = parameters->surface_mode;
+      *kvp_mode = parameters->kvp_mode;
+      *ligand_mode = parameters->ligand_mode;
 
-            /* Print in shell the PDB path that is running in KVFinder */
-	        if (verbose_flag)
-	            fprintf (stdout, "[PID %u] Running parKVFinder for: %s\n", getpid (), PDB_NAME);
+      /* Print in shell the PDB path that is running in KVFinder */
+      if (verbose_flag)
+        fprintf (stdout, "[PID %u] Running parKVFinder for: %s\n", getpid (), PDB_NAME);
 
-            /* Free struct TOML */
+      /* Free struct TOML */
 			free (param);
-			/* Loaded parameters, return to main script */
+
+      /* Loaded parameters, return to main script */
 			return verbose_flag;
 		}
 	}
@@ -916,7 +917,7 @@ argparser (int argc,
             }
 
             /* Copy PDB name to OUTPUT */
-            for (i = 0, j = 0; i < bar+1; i++, j++)
+            for (i = 0, j = 0; i < bar; i++, j++)
                 OUTPUT[j] = PDB_NAME[i];
             /* Put end symbol in OUTPUT */
             OUTPUT[j] = '\0';
@@ -1195,7 +1196,7 @@ argparser (int argc,
 		exit (0);
 	}
 
-	toml_name = combine (combine (combine (OUTPUT, "KV_Files\\parameters_"), BASE_NAME), ".toml"); /* Windows */
+	toml_name = combine (combine (combine (OUTPUT, "\\KV_Files\\parameters_"), BASE_NAME), ".toml"); /* Windows */
 	print_toml (toml_name,
 	            OUTPUT,
 	            BASE_NAME,

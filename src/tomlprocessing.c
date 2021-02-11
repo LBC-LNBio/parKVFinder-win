@@ -21,7 +21,6 @@ convert_path_windows (char PATH[500])
 			if (PATH[i+1] == '\\') ;
 			else {
 				TMP_PATH[j++] = '\\';
-				TMP_PATH[j++] = '\\';
 			}
 		}
 		else {
