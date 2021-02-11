@@ -52,7 +52,18 @@ Finally, to install the `PyMOL2 parKVFinder Tools` on PyMOL v2.x, download the l
 
 Or, instead of selecting `PyMOL2-parKVFinder-Tools.zip` (Step 5), you can select `__init__.py` file on `parKVFinder-win-x.x\tools\PyMOL2-parKVFinder-Tools` directory tree.
 
-For an example of use, there is a comprehensive tutorial for `PyMOL2 parKVFinder Tools` [here](https://github.com/LBC-LNBio/parKVFinder/wiki/parKVFinder-Tutorial). For more information, refer to parKVFinder [wiki](https://github.com/LBC-LNBio/parKVFinder/wiki).
+# Tutorial
+
+For an example of use, there is a comprehensive tutorial for `PyMOL2 parKVFinder Tools` and `parKVFinder-win` command line interface (CLI) [here](https://github.com/LBC-LNBio/parKVFinder/wiki/parKVFinder-Tutorial).
+_Note_: Instead of invoking the CLI using `parKVFinder` command, you must use `%KVFinder_PATH%\parKVFinder-win64.exe` command.
+
+# Manual
+
+A comprehensive list of all `PyMOL2 parKVFinder Tools` and `parKVFinder-win` CLI commands are provided in this [manual](https://github.com/LBC-LNBio/parKVFinder/wiki/parKVFinder-Manual).
+
+_Note_: Instead of invoking the CLI using `parKVFinder` command, you must use `%KVFinder_PATH%\parKVFinder-win64.exe` command.
+
+For more information, refer to parKVFinder [wiki](https://github.com/LBC-LNBio/parKVFinder/wiki).
 
 # About
 
