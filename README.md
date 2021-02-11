@@ -17,7 +17,7 @@ Follow these steps to install parKVFinder-win on Windows 10:
 setx KVFinder_PATH C:\path\to\your\parKVFinder-win-x.x
 ```
 
-or, open **Control Panel** > **System** > **Advanced system settings** > **Advanced** tab > **Enviroment Variables...** button > **User variables for <user>** panel > **New...** button. On the **Edit System Variable** windows, set `KVFinder_PATH` on **Variable name** and `C:\path\to\your\parKVFinder-win-x.x` on **Variable value**.
+or, open **Control Panel** > **System** > **Advanced system settings** > **Advanced** tab > **Enviroment Variables...** button > **User variables for \<user\>** panel > **New...** button. On the **Edit System Variable** windows, set `KVFinder_PATH` on **Variable name** and `C:\path\to\your\parKVFinder-win-x.x` on **Variable value**.
 
 # PyMOL Plug-in Installation (`PyMOL2 parKVFinder Tools`)
 
