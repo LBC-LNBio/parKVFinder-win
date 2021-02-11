@@ -2,9 +2,9 @@
 
 First, you need to install PyMOL v2.x on your computer. If you do not have it installed, please refer to PyMOL [website](https://pymol.org/2/).
 
-`PyMOL2 parKVFinder Tools` is available to use parKVFinder-win with PyMOL v2.x, which has been developed using Qt interface and Python3.
+`PyMOL2 parKVFinder Tools` is available to use `parKVFinder-win` with PyMOL v2.x, which has been developed using Qt interface and Python3.
 
-After installing PyMOL v2.x, plug-in requires the installation of [toml](https://pypi.org/project/toml/) module and PyMOL's native Python do not have it installed. So you need to install it:
+After installing PyMOL v2.x, plug-in requires the installation of [toml](https://pypi.org/project/toml/) module and PyMOL's native Python does not have it installed. So you need to install it:
 
 1. Access PyMOL directory and open `Conda-Prompt.bat` file, which will open a Command Prompt with a conda environment.
 
