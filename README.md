@@ -55,6 +55,7 @@ Or, instead of selecting `PyMOL2-parKVFinder-Tools.zip` (Step 5), you can select
 # Tutorial
 
 For an example of use, there is a comprehensive tutorial for `PyMOL2 parKVFinder Tools` and `parKVFinder-win` command line interface (CLI) [here](https://github.com/LBC-LNBio/parKVFinder/wiki/parKVFinder-Tutorial).
+
 _Note_: Instead of invoking the CLI using `parKVFinder` command, you must use `%KVFinder_PATH%\parKVFinder-win64.exe` command.
 
 # Manual
