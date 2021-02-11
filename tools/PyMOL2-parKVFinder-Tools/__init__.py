@@ -1043,7 +1043,7 @@ class PyMOL2parKVFinderTools(QMainWindow):
             f.write("\n[SETTINGS.internalbox]\n")
             f.write("# Coordinates of the internal 3D grid. Used for calculations.\n\n")
             box = self.create_box_parameters(is_internal_box=True)
-            d = {'SETTINGS': {'visiblebox': box}}
+            d = {'SETTINGS': {'internalbox': box}}
             toml.dump(o=d, f=f)
 
         return True
