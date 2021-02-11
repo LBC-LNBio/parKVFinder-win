@@ -287,6 +287,8 @@ class PyMOL2parKVFinderTools(QMainWindow):
             print(f"> Elapsed time: {elapsed_time:.2f} seconds")
 
             # Copy parameters file
+            if os.path.exists(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', f'parameters_{self.base_name.text()}.toml')}"):
+                os.remove(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', f'parameters_{self.base_name.text()}.toml')}")
             os.rename("parameters.toml", f"{os.path.join(self.output_dir_path.text(), 'KV_Files', f'parameters_{self.base_name.text()}.toml')}")
 
             # Load successfull run
@@ -307,8 +309,17 @@ class PyMOL2parKVFinderTools(QMainWindow):
 
 
     def get_number_of_cavities(self):
+        # Read results file (Windows)
+        with open(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', self.base_name.text(), f'{self.base_name.text()}.KVFinder.results.toml')}") as f:
+            results = toml.loads(f.read().replace('\\', '/'))
+            results['FILES_PATH']['INPUT'] = results['FILES_PATH']['INPUT'].replace('/', '\\')
+            results['FILES_PATH']['OUTPUT'] = results['FILES_PATH']['OUTPUT'].replace('/', '\\')
+            if 'LIGAND' in results['FILES_PATH'].keys():
+                results['FILES_PATH']['LIGAND'] = results['FILES_PATH']['LIGAND'].replace('/', '\\')
 
-        results = toml.load(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', self.base_name.text(), f'{self.base_name.text()}.KVFinder.results.toml')}")
+        # Read results (Ubuntu/macOS)
+        # results = toml.load(f"{os.path.join(self.output_dir_path.text(), 'KV_Files', self.base_name.text(), f'{self.base_name.text()}.KVFinder.results.toml')}")
+
         return len(results['RESULTS']['VOLUME'].keys())
 
 
@@ -1150,8 +1161,15 @@ class PyMOL2parKVFinderTools(QMainWindow):
         # Create global variable for results
         global results
 
-        # Read results file
-        results = toml.load(results_file)
+        # Read results (Windows)
+        with open(results_file) as f:
+            results = toml.loads(f.read().replace('\\', '/'))
+            results['FILES_PATH']['INPUT'] = results['FILES_PATH']['INPUT'].replace('/', '\\')
+            results['FILES_PATH']['OUTPUT'] = results['FILES_PATH']['OUTPUT'].replace('/', '\\')
+            if 'LIGAND' in results['FILES_PATH'].keys():
+                results['FILES_PATH']['LIGAND'] = results['FILES_PATH']['LIGAND'].replace('/', '\\')
+        # Read results (Ubuntu/macOS)
+        # results = toml.load(results_file)
 
         # Clean results
         self.clean_results()
