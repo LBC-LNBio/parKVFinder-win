@@ -54,10 +54,6 @@ Or, instead of selecting `PyMOL2-parKVFinder-Tools.zip` (Step 5), you can select
 
 For an example of use, there is a comprehensive tutorial for `PyMOL2 parKVFinder Tools` [here](https://github.com/LBC-LNBio/parKVFinder/wiki/parKVFinder-Tutorial). For more information, refer to parKVFinder [wiki](https://github.com/LBC-LNBio/parKVFinder/wiki).
 
-# Citation
-
-Please read and cite the original paper **[ParKVFinder: A thread-level parallel approach in biomolecular cavity detection](https://doi.org/10.1016/j.softx.2020.100606)** (10.1016/j.softx.2020.100606).
-
 # About
 
 The software is licensed under the terms of the GNU General Public License version 3 (GPL3) and is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
@@ -79,5 +75,9 @@ Brazilian Biosciences National Laboratory - [LNBio](https://lnbio.cnpem.br/)
 If you have any further questions, inquires or if you wish to contribute
 to parKVFinder project, please contact us at
 paulo.oliveira@lnbio.cnpem.br.
+
+# Citation
+
+Please read and cite the original paper **[ParKVFinder: A thread-level parallel approach in biomolecular cavity detection](https://doi.org/10.1016/j.softx.2020.100606)** (10.1016/j.softx.2020.100606).
 
 ---
