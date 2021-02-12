@@ -258,7 +258,7 @@ class PyMOL2parKVFinderTools(QMainWindow):
             # Check configuration files
             for fn in ['.bash_profile', '.bashrc', '.zshrc']:
                 fn = os.path.join(os.getenv('HOME'), fn)
-                if os.path.exists(os.path.join(os.getenv('HOME'), '.bash_profile')):
+                if os.path.exists(fn):
                     with open(fn, 'r') as envs:
                         for line in envs:
                             if line.find('export KVFinder_PATH') == 0:
