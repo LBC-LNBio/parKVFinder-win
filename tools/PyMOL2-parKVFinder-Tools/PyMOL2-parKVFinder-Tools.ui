@@ -1816,7 +1816,7 @@ The description includes spatial and constitutional characterization. The spatia
                  <double>1000000000.000000000000000</double>
                 </property>
                 <property name="singleStep">
-                 <double>1.000000000000000</double>
+                 <double>0.100000000000000</double>
                 </property>
                 <property name="value">
                  <double>5.000000000000000</double>
