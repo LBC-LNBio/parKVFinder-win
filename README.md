@@ -35,7 +35,7 @@ After installing PyMOL v2.x, plug-in requires the installation of [toml](https:/
 pip3 install toml
 ```
 
-Finally, to install the `PyMOL2 parKVFinder Tools` on PyMOL v2.x, download the latest `PyMOL2-parKVFinder-Tools.zip` from [here](https://github.com/LBC-LNBio/parKVFinder/releases/latest/download/PyMOL2-parKVFinder-Tools.zip) and follow these steps:
+Finally, to install the `PyMOL2 parKVFinder Tools` on PyMOL v2.x, download the latest `PyMOL2-parKVFinder-Tools.zip` from [here](https://github.com/LBC-LNBio/parKVFinder-win/releases/latest/download/PyMOL2-parKVFinder-Tools.zip) and follow these steps:
 
 1. Open PyMOL.
 2. Go to **Plugin** menu, click on **Plugin Manager**.
