@@ -257,7 +257,7 @@ class PyMOL2parKVFinderTools(QMainWindow):
         if KVFinder_PATH is None:
             # Check configuration files
             for fn in ['.bash_profile', '.bashrc', '.zshrc']:
-                fn = os.path.join(os.getenv('HOME'), '.bash_profile')
+                fn = os.path.join(os.getenv('HOME'), fn)
                 if os.path.exists(os.path.join(os.getenv('HOME'), '.bash_profile')):
                     with open(fn, 'r') as envs:
                         for line in envs:
@@ -1421,17 +1421,3 @@ class PyMOL2parKVFinderTools(QMainWindow):
 
         # Residues
         self.residues_list.clear()
-
-
-def KVFinderWebTools() -> None:
-    """ Debug KVFinderWebTools """
-    from PyQt5.QtWidgets import QApplication
-    app = QApplication(sys.argv)
-    dialog = PyMOL2parKVFinderTools()
-    dialog.setWindowTitle('KVFinder-web Tools')
-    dialog.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    KVFinderWebTools()
