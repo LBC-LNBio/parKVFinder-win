@@ -68,9 +68,22 @@ For more information, refer to parKVFinder [wiki](https://github.com/LBC-LNBio/p
 
 # About
 
-The software is licensed under the terms of the GNU General Public License version 3 (GPL3) and is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## Issues
 
-`parKVFinder-win` and `PyMOL2 parKVFinder Tools` was developed by:
+parKVFinder software uses GitHub for project management. Please help us by reporting any problems or requests.
+
+On [Issues](https://github.com/LBC-LNBio/parKVFinder-win/issues) page, you can file a:
+
+- [Bug Report](https://github.com/LBC-LNBio/parKVFinder-win/issues/new?assignees=&labels=&template=bug_report.md&title=)
+- [Request a new feature](https://github.com/LBC-LNBio/parKVFinder-win/issues/new?assignees=&labels=&template=feature_request.md&title=)
+
+Only make sure the bug or request has not already been reported. Click on “Search” and enter some keywords to search.
+
+Thank you for helping us improve parKVFinder!
+
+## Scientific team
+
+parKVFinder, parKVFinder-win, PyMOL2 parKVFinder Tools and PyMOL parKVFinder Tools were developed by:
 
 - João Victor da Silva Guerra
 - Helder Veras Ribeiro Filho
@@ -79,17 +92,19 @@ The software is licensed under the terms of the GNU General Public License versi
 - José Geraldo de Carvalho Pereira
 - Paulo Sergio Lopes de Oliveira
 
-Brazilian Center for Research in Energy and Materials -
-[CNPEM](https://cnpem.br)
-
-Brazilian Biosciences National Laboratory - [LNBio](https://lnbio.cnpem.br/)
+Computational Biology Laboratory ([LBC](https://github.com/LBC-LNBio)), Brazilian Biosciences National Laboratory ([LNBio](https://lnbio.cnpem.br/)), Brazilian Center for Research in Energy and Materials ([CNPEM](https://cnpem.br)).
 
 If you have any further questions, inquires or if you wish to contribute
-to parKVFinder project, please contact us at
-paulo.oliveira@lnbio.cnpem.br.
+to parKVFinder project, please contact us at joao.guerra@lnbio.cnpem.br and paulo.oliveira@lnbio.cnpem.br.
 
-# Citation
+## Citing parKVFinder
 
-Please read and cite the original paper **[ParKVFinder: A thread-level parallel approach in biomolecular cavity detection](https://doi.org/10.1016/j.softx.2020.100606)** (10.1016/j.softx.2020.100606).
+João Victor da Silva Guerra, Helder Veras Ribeiro Filho, Leandro Oliveira Bortot, Rodrigo Vargas Honorato, José Geraldo de Carvalho Pereira, Paulo Sergio Lopes de Oliveira, ParKVFinder: A thread-level parallel approach in biomolecular cavity detection, SoftwareX, 2020, [https://doi.org/10.1016/j.softx.2020.100606](https://doi.org/10.1016/j.softx.2020.100606).
 
----
+## Funding
+
+This work was supported by the Fundação de Amparo à Pesquisa do Estado de São Paulo (FAPESP) [Grant Number 2018/00629-0], Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq) [Grant Number 350244/2020-0], and Brazilian Center for Research in Energy and Materials (CNPEM).
+
+## License
+
+The software is licensed under the terms of the GNU General Public License version 3 (GPL3) and is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
