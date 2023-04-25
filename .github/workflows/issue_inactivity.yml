@@ -1,7 +1,7 @@
 name: Close inactive issues
 on:
   schedule:
-    - cron: "00 3 * * *"
+    - cron: "05 17 * * *"
 
 jobs:
   close-issues:
@@ -10,13 +10,13 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/stale@v5
+      - uses: actions/stale@v8
         with:
           days-before-issue-stale: 30
-          days-before-issue-close: 14
+          days-before-issue-close: 7
           stale-issue-label: "stale"
-          stale-issue-message: "This issue is stale because it has been open for 30 days with no activity."
-          close-issue-message: "This issue was closed because it has been inactive for 14 days since being marked as stale."
+          stale-issue-message: "This issue has not been updated in a while, so we are marking it as `stale`. This means that the issue has not had any recent activity and may require attention. <br/><br/>If you feel that this was a mistake, or if you have any additional information or updates to share, please feel free to remove the `stale` label or add a comment to the issue.<br/><br/>If no further activity occurs, this issue will be closed in 7 days."
+          close-issue-message: "This issue was closed as it has been stalled for 7 days with no activity. If you feel that the issue is still relevant, please feel free to re-open it and provide any additional information that may be helpful in resolving the issue."
           days-before-pr-stale: -1
           days-before-pr-close: -1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.STALE }}
