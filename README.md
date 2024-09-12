@@ -6,7 +6,7 @@ built to help you get started with our cavity detection software.
 
 Follow these steps to install parKVFinder-win on Windows 10:
 
-1. Get the latest release from [here](https://github.com/LBC-LNBio/parKVFinder-win/releases/).
+1. Get the latest release from [here](https://github.com/LBC-LNBio/parKVFinder-win/archive/refs/tags/v1.0.2.zip).
 
 2. Unzip the `parKVFinder-win-x.x.zip` on a preferred location.
 
